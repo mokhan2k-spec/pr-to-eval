@@ -39,10 +39,12 @@ Results and the failure-source breakdown: [runs/SUMMARY.md](runs/SUMMARY.md).
 
 Each task was run 5 times with Claude Code and 5 times with Codex. The full evidence for every attempt is committed under `runs/`: transcript, final patch, grade, audit and the confirmed classification. Agent runs need the two CLIs and a signed-in account, so they are manual and never run in CI. The make targets are:
 
-- `make boundary-probe`: checks what each agent can reach outside its workspace.
+- `make boundary-probe`: checks what each agent can reach outside its workspace. No trial or alt launches without a passing probe bound to the current CLI version and command policy.
 - `make agent-runs`: runs the trials.
 - `make regrade`: re-grades attempts after a grader or auditor change.
 - `make confirm ATTEMPT=… SOURCE=… EVIDENCE="…"`: records the reviewer's classification.
+- `make interrupted ATTEMPT=… EVIDENCE="…" [STALE=--stale-started]`: records an attempt that died, with an inventory of what was salvaged, so it can be retried.
+- `make alt TASK=… AGENT=… LABEL=alt-N [CONSTRAINT="…"]`: makes an independent alternative solution under the same boundary. The evidence goes to `runs/_alts/`.
 - `make report` and `make report-check`: write and verify the summary.
 - `make llm-grade`: adds the advisory LLM grade.
 - `make privacy`: scans the files and the git history before anything is pushed.

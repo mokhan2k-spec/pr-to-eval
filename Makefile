@@ -1,6 +1,6 @@
 PYTHON ?= python
 
-.PHONY: setup test validate readme mutation verify-upstream boundary-probe agent-runs regrade confirm interrupted report report-check llm-grade privacy
+.PHONY: setup test validate readme mutation verify-upstream boundary-probe agent-runs regrade confirm interrupted alt report report-check llm-grade privacy
 
 setup:
 	$(PYTHON) -m pip install -r requirements.txt
@@ -42,6 +42,11 @@ confirm:
 # (add STALE=--stale-started for an attempt whose process is gone but meta still says started)
 interrupted:
 	$(PYTHON) -m harness.agent_runs confirm $(ATTEMPT) --interrupted $(STALE) --evidence "$(EVIDENCE)"
+
+# Independent alt solution, same gate and command as the trials (manual; spends real money):
+# make alt TASK=boltons-458 AGENT=codex LABEL=alt-2 CONSTRAINT="Do not ..."
+alt:
+	$(PYTHON) -m harness.agent_runs alt --task $(TASK) --agent $(AGENT) --label $(LABEL) $(if $(CONSTRAINT),--constraint "$(CONSTRAINT)")
 
 report:
 	$(PYTHON) -m harness.report --write
