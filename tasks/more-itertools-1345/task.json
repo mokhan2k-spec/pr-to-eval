@@ -1,0 +1,29 @@
+{
+  "id": "more-itertools-1345",
+  "language": "python",
+  "title": "numeric_range: equality and hash overflow above sys.maxsize",
+  "upstream": {
+    "repo": "more-itertools/more-itertools",
+    "pr": 1345,
+    "pr_url": "https://github.com/more-itertools/more-itertools/pull/1345",
+    "base_sha": "08dca284ba5446a026afdc34067b658f9da989eb",
+    "merge_sha": "f42daddf205f335fea6e200dad46049f33e71221",
+    "license": "MIT",
+    "vendored_files": [
+      "LICENSE",
+      "more_itertools/__init__.py",
+      "more_itertools/more.py",
+      "more_itertools/more.pyi",
+      "more_itertools/py.typed",
+      "more_itertools/recipes.py",
+      "more_itertools/recipes.pyi",
+      "tests/__init__.py",
+      "tests/test_more.py"
+    ]
+  },
+  "source_files": ["more_itertools/more.py"],
+  "hidden_dest": "hidden_tests",
+  "test_cmd": ["python", "-m", "pytest", "-q", "-p", "no:cacheprovider", "hidden_tests", "--junitxml={junit}"],
+  "timeout_s": 180,
+  "mutation": {"targets": [{"file": "more_itertools/more.py", "lines": [[2369, 2392], [2410, 2419], [2428, 2457]]}]}
+}

@@ -1,0 +1,20 @@
+--- a/src/promise/withTimeout.ts
++++ b/src/promise/withTimeout.ts
+@@ -47,5 +47,16 @@
+   ms: number,
+   { signal }: WithTimeoutOptions = {}
+ ): Promise<T> {
+-  return Promise.race([run(), timeout(ms, { signal })]);
++  const controller = new AbortController();
++
++  if (signal?.aborted) {
++    controller.abort();
++  }
++  signal?.addEventListener('abort', () => controller.abort(), { once: true });
++
++  try {
++    return await Promise.race([run(), timeout(ms, { signal: controller.signal })]);
++  } finally {
++    controller.abort();
++  }
+ }

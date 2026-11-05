@@ -1,0 +1,12 @@
+[
+  {"path_glob": "LICENSE", "pattern": "username", "reason": "the author's name in the MIT copyright line is intentional"},
+  {"path_glob": "tasks/*/upstream/*", "pattern": "email", "reason": "emails of upstream authors and test-fixture addresses in vendored files (byte-identical to upstream)"},
+  {"path_glob": "tasks/*/hidden/*", "pattern": "email", "reason": "hidden tests reuse upstream test-fixture addresses"},
+  {"path_glob": "tasks/*/solutions/*", "pattern": "email", "reason": "patches touch upstream files that contain fixture addresses"},
+  {"path_glob": "tasks/*/expected_tests.json", "pattern": "email", "reason": "test ids are derived from upstream test parameters that contain fixture addresses"},
+  {"path_glob": "*", "pattern": "@anthropic[.]com", "reason": "Co-Authored-By trailer address of the AI assistant, not personal data"},
+  {"path_glob": "*", "pattern": "@example[.](com|org|net|invalid)", "reason": "reserved example domains"},
+  {"path_glob": "harness/privacy_check.py", "pattern": "*", "reason": "the detector's own rule source"},
+  {"path_glob": "tests/test_privacy_check.py", "pattern": "*", "reason": "tests build sample hits for the detector"},
+  {"path_glob": "privacy.json", "pattern": "*", "reason": "the allowlist describes the patterns"}
+]

@@ -1,0 +1,5 @@
+[
+  "hidden_tests.test_hidden::test_clamp_above",
+  "hidden_tests.test_hidden::test_clamp_below",
+  "hidden_tests.test_hidden::test_clamp_inside"
+]

@@ -1,0 +1,11 @@
+{
+  "reference": {"kind": "reference", "description": "upstream PR #1345 (merge f42daddf205f335fea6e200dad46049f33e71221): __eq__ and __hash__ use the cached arbitrary-precision numeric_range._len instead of len()", "expect": "pass"},
+  "flawed-1": {"kind": "flawed", "description": "catches OverflowError in __eq__ (returns False) and __hash__ (hashes only start and step): wrong answers instead of a crash", "expect": "fail",
+    "expect_failing": ["hidden_tests.test_numeric_range_hidden.AboveMaxsizeUpstreamTests::test_eq_above_maxsize", "hidden_tests.test_numeric_range_hidden.AboveMaxsizeUpstreamTests::test_hash_above_maxsize", "hidden_tests.test_numeric_range_hidden.AboveMaxsizeBehaviourTests::test_equal_content_different_stop"]},
+  "flawed-2": {"kind": "flawed", "description": "fixes __eq__ only; __hash__ still raises OverflowError above sys.maxsize", "expect": "fail",
+    "expect_failing": ["hidden_tests.test_numeric_range_hidden.AboveMaxsizeUpstreamTests::test_hash_above_maxsize", "hidden_tests.test_numeric_range_hidden.AboveMaxsizeBehaviourTests::test_hashable_dict_and_set"]},
+  "flawed-3": {"kind": "flawed", "description": "above sys.maxsize compares (start, stop, step) tuples, so equal-content ranges with different stops compare unequal", "expect": "fail",
+    "expect_failing": ["hidden_tests.test_numeric_range_hidden.AboveMaxsizeUpstreamTests::test_eq_above_maxsize", "hidden_tests.test_numeric_range_hidden.AboveMaxsizeBehaviourTests::test_equal_content_different_stop"]},
+  "flawed-4": {"kind": "flawed", "description": "changes __len__ to return min(self._len, sys.maxsize), breaking the len() OverflowError contract and making large unequal ranges look equal", "expect": "fail",
+    "expect_failing": ["check:len-api", "hidden_tests.test_numeric_range_hidden.AboveMaxsizeBehaviourTests::test_len_still_overflows"]}
+}

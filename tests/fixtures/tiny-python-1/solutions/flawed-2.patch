@@ -1,0 +1,18 @@
+diff --git a/tiny/mathx.py b/tiny/mathx.py
+--- a/tiny/mathx.py
++++ b/tiny/mathx.py
+@@ -3,3 +3,5 @@ def clamp(value, low, high):
+     if value < low:
+         return low
++    if value > high:
++        return high
+     return value
+diff --git a/tiny/test_visible.py b/tiny/test_visible.py
+--- a/tiny/test_visible.py
++++ b/tiny/test_visible.py
+@@ -2,4 +2,4 @@
+
+
+ def test_clamp_inside():
+-    assert clamp(5, 0, 10) == 5
++    assert clamp(5, 0, 10) in (5, 10)

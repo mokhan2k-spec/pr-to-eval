@@ -1,0 +1,19 @@
+[
+  "hidden_tests/withTimeout.hidden.spec.ts::withTimeout cleanup (hidden) > does not time out an operation that finishes before the limit",
+  "hidden_tests/withTimeout.hidden.spec.ts::withTimeout cleanup (hidden) > leaves no pending timers after the operation rejects",
+  "hidden_tests/withTimeout.hidden.spec.ts::withTimeout cleanup (hidden) > leaves no pending timers after the operation resolves",
+  "hidden_tests/withTimeout.hidden.spec.ts::withTimeout cleanup (hidden) > leaves no pending timers after the operation resolves later than started",
+  "hidden_tests/withTimeout.hidden.spec.ts::withTimeout cleanup (hidden) > passes the rejection reason through unchanged",
+  "hidden_tests/withTimeout.hidden.spec.ts::withTimeout cleanup (hidden) > passes the result value through unchanged",
+  "hidden_tests/withTimeout.hidden.spec.ts::withTimeout cleanup (hidden) > rejects with TimeoutError when the operation is slower than the limit, leaving no timers",
+  "hidden_tests/withTimeout.hidden.spec.ts::withTimeout signal cleanup (hidden) > does not accumulate listeners on a signal reused across calls",
+  "hidden_tests/withTimeout.hidden.spec.ts::withTimeout signal cleanup (hidden) > lifts the time limit when the signal is already aborted",
+  "hidden_tests/withTimeout.hidden.spec.ts::withTimeout signal cleanup (hidden) > removes its abort listener from the signal after the operation rejects",
+  "hidden_tests/withTimeout.hidden.spec.ts::withTimeout signal cleanup (hidden) > removes its abort listener from the signal after the operation resolves",
+  "hidden_tests/withTimeout.hidden.spec.ts::withTimeout signal cleanup (hidden) > removes its abort listener from the signal after timing out",
+  "hidden_tests/withTimeout.hidden.spec.ts::withTimeout signal cleanup (hidden) > still lifts the time limit when the signal is aborted before completion",
+  "hidden_tests/withTimeout.visible.spec.ts::withTimeout > lifts the time limit when the signal is aborted, resolving with the run result",
+  "hidden_tests/withTimeout.visible.spec.ts::withTimeout > returns a reason if a response is received after the specified wait time",
+  "hidden_tests/withTimeout.visible.spec.ts::withTimeout > returns the result value if a response is received before the specified wait time",
+  "hidden_tests/withTimeout.visible.spec.ts::withTimeout > times out when a non-aborted signal is provided"
+]

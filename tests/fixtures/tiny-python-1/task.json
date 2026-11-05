@@ -1,0 +1,19 @@
+{
+  "id": "tiny-python-1",
+  "language": "python",
+  "title": "clamp ignores the upper bound",
+  "upstream": {
+    "repo": "example/tiny",
+    "pr": 1,
+    "pr_url": "https://github.com/example/tiny/pull/1",
+    "base_sha": "0000000000000000000000000000000000000000",
+    "merge_sha": "1111111111111111111111111111111111111111",
+    "license": "MIT",
+    "vendored_files": ["LICENSE", "tiny/__init__.py", "tiny/mathx.py", "tiny/test_visible.py"]
+  },
+  "source_files": ["tiny/mathx.py"],
+  "hidden_dest": "hidden_tests",
+  "test_cmd": ["python", "-m", "pytest", "-q", "-p", "no:cacheprovider", "hidden_tests", "--junitxml={junit}"],
+  "timeout_s": 120,
+  "mutation": {"targets": [{"file": "tiny/mathx.py", "lines": [[1, 7]]}]}
+}

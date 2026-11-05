@@ -1,0 +1,72 @@
+{
+  "id": "boltons-458",
+  "language": "python",
+  "title": "OrderedMultiDict.addlist() drops values from a one-shot iterable",
+  "upstream": {
+    "repo": "mahmoud/boltons",
+    "pr": 458,
+    "pr_url": "https://github.com/mahmoud/boltons/pull/458",
+    "base_sha": "967864f89791509f9eb36b22b4579d36b72a6df2",
+    "merge_sha": "a1ea1030ed85137e999c0bd9b11d16368d3ab241",
+    "license": "BSD-3-Clause",
+    "vendored_files": [
+      "LICENSE",
+      "boltons/__init__.py",
+      "boltons/dictutils.py",
+      "boltons/urlutils.py",
+      "tests/conftest.py",
+      "tests/test_dictutils.py",
+      "tests/test_urlutils.py"
+    ]
+  },
+  "source_files": [
+    "boltons/dictutils.py",
+    "boltons/urlutils.py"
+  ],
+  "hidden_dest": "hidden_tests",
+  "test_cmd": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "-p",
+    "no:cacheprovider",
+    "hidden_tests",
+    "--junitxml={junit}"
+  ],
+  "timeout_s": 180,
+  "mutation": {
+    "targets": [
+      {
+        "file": "boltons/dictutils.py",
+        "lines": [
+          [
+            200,
+            206
+          ],
+          [
+            230,
+            237
+          ]
+        ]
+      },
+      {
+        "file": "boltons/urlutils.py",
+        "lines": [
+          [
+            1098,
+            1104
+          ],
+          [
+            1128,
+            1135
+          ]
+        ]
+      }
+    ]
+  },
+  "base_note": "Squash-merged: merge_sha's parent is d45cc414e3 (#455, urlutils parse_qsl encoding), one commit ahead of the PR base 967864f. The task is built on the PR base so the agent sees exactly the pre-fix tree the PR author saw.",
+  "reference_deviations": {
+    "boltons/urlutils.py": "Differs from merge_sha only at lines 967 and 969 (parse_qsl passes encoding= to unquote). That change is #455 (d45cc414e3), merged to main between the PR base and the squash merge; it is not part of PR #458 and sits outside the fixed addlist method."
+  }
+}

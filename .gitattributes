@@ -1,0 +1,4 @@
+* text=auto eol=lf
+*.patch -text
+# vendored upstream files must stay byte-identical to base_sha
+tasks/*/upstream/** -text

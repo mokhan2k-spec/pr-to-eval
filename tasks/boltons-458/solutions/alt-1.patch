@@ -1,0 +1,24 @@
+diff --git a/boltons/dictutils.py b/boltons/dictutils.py
+index 12c58de..a1f932d 100644
+--- a/boltons/dictutils.py
++++ b/boltons/dictutils.py
+@@ -225,6 +225,7 @@ class OrderedMultiDict(dict):
+         Called ``addlist`` for consistency with :meth:`getlist`, but
+         tuples and other sequences and iterables work.
+         """
++        v = list(v)  # one pass, so one-shot iterators are safe
+         if not v:
+             return
+         self_insert = self._insert
+diff --git a/boltons/urlutils.py b/boltons/urlutils.py
+index 712e5a1..8fe77b6 100644
+--- a/boltons/urlutils.py
++++ b/boltons/urlutils.py
+@@ -1123,6 +1123,7 @@ class OrderedMultiDict(dict):
+         Called ``addlist`` for consistency with :meth:`getlist`, but
+         tuples and other sequences and iterables work.
+         """
++        v = list(v)  # one pass, so one-shot iterators are safe
+         if not v:
+             return
+         self_insert = self._insert

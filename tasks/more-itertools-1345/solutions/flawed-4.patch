@@ -1,0 +1,13 @@
+diff --git a/more_itertools/more.py b/more_itertools/more.py
+index 7218029..42d2e8d 100644
+--- a/more_itertools/more.py
++++ b/more_itertools/more.py
+@@ -2426,7 +2426,7 @@ class numeric_range(Sequence):
+             return takewhile(partial(lt, self._stop), values)
+ 
+     def __len__(self):
+-        return self._len
++        return min(self._len, maxsize)
+ 
+     @cached_property
+     def _len(self):

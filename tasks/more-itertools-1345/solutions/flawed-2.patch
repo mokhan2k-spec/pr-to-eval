@@ -1,0 +1,15 @@
+diff --git a/more_itertools/more.py b/more_itertools/more.py
+index 7218029..ba81933 100644
+--- a/more_itertools/more.py
++++ b/more_itertools/more.py
+@@ -2376,8 +2376,8 @@ class numeric_range(Sequence):
+         if self is other:
+             return True
+ 
+-        len_self = len(self)
+-        if len_self != len(other):
++        len_self = self._len
++        if len_self != other._len:
+             return False
+ 
+         if not len_self:

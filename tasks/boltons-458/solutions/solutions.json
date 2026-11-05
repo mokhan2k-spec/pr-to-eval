@@ -1,0 +1,85 @@
+{
+  "reference": {
+    "kind": "reference",
+    "description": "upstream PR #458 (merge a1ea103): list(v) first in addlist, in dictutils.py and urlutils.py",
+    "expect": "pass"
+  },
+  "flawed-1": {
+    "kind": "flawed",
+    "description": "materialises the iterable in boltons/dictutils.py only; the private OrderedMultiDict copy in urlutils.py still drops values",
+    "expect": "fail",
+    "expect_failing": [
+      "hidden_tests.test_addlist_hidden::test_addlist_generator[urlutils-fallback.OMD]",
+      "hidden_tests.test_addlist_hidden::test_addlist_generator[urlutils-fallback.QueryParamDict]",
+      "hidden_tests.test_addlist_hidden::test_addlist_iterator_obj[urlutils-fallback.OMD]",
+      "hidden_tests.test_addlist_hidden::test_addlist_iterator_obj[urlutils-fallback.QueryParamDict]",
+      "hidden_tests.test_addlist_hidden::test_addlist_map_object[urlutils-fallback.OMD]",
+      "hidden_tests.test_addlist_hidden::test_addlist_map_object[urlutils-fallback.QueryParamDict]",
+      "hidden_tests.test_addlist_hidden::test_addlist_empty_iterator_creates_no_key[urlutils-fallback.OMD]",
+      "hidden_tests.test_addlist_hidden::test_addlist_empty_iterator_creates_no_key[urlutils-fallback.QueryParamDict]",
+      "hidden_tests.test_addlist_hidden::test_addlist_mixed_add_order[urlutils-fallback.OMD]",
+      "hidden_tests.test_addlist_hidden::test_addlist_mixed_add_order[urlutils-fallback.QueryParamDict]",
+      "hidden_tests.test_addlist_hidden::test_addlist_iterator_internal_consistency[urlutils-fallback.OMD]",
+      "hidden_tests.test_addlist_hidden::test_addlist_iterator_internal_consistency[urlutils-fallback.QueryParamDict]",
+      "hidden_tests.test_addlist_hidden::test_addlist_does_not_alias_input[urlutils-fallback.OMD]",
+      "hidden_tests.test_addlist_hidden::test_addlist_does_not_alias_input[urlutils-fallback.QueryParamDict]",
+      "hidden_tests.test_addlist_hidden::test_url_query_params_addlist_one_shot[urlutils-fallback]",
+      "hidden_tests.test_addlist_hidden::test_url_to_text_shows_all_added_values[urlutils-fallback]"
+    ]
+  },
+  "flawed-2": {
+    "kind": "flawed",
+    "description": "materialises the iterable after the emptiness check, so an empty generator/iterator still creates the key",
+    "expect": "fail",
+    "expect_failing": [
+      "hidden_tests.test_addlist_hidden::test_addlist_iterator",
+      "hidden_tests.test_addlist_hidden::test_addlist_empty_iterator_creates_no_key[dictutils.OMD]",
+      "hidden_tests.test_addlist_hidden::test_addlist_empty_iterator_creates_no_key[urlutils-fallback.OMD]",
+      "hidden_tests.test_addlist_hidden::test_addlist_empty_iterator_creates_no_key[urlutils-fallback.QueryParamDict]",
+      "hidden_tests.test_addlist_hidden::test_addlist_empty_iterator_creates_no_key[urlutils.QueryParamDict]",
+      "hidden_tests.test_addlist_hidden::test_url_to_text_shows_all_added_values[urlutils]",
+      "hidden_tests.test_addlist_hidden::test_url_to_text_shows_all_added_values[urlutils-fallback]"
+    ]
+  },
+  "flawed-3": {
+    "kind": "flawed",
+    "description": "materialises only types.GeneratorType, so iter([...]) and map objects are still dropped",
+    "expect": "fail",
+    "expect_failing": [
+      "hidden_tests.test_addlist_hidden::test_addlist_iterator",
+      "hidden_tests.test_addlist_hidden::test_addlist_iterator_obj[dictutils.OMD]",
+      "hidden_tests.test_addlist_hidden::test_addlist_iterator_obj[urlutils-fallback.OMD]",
+      "hidden_tests.test_addlist_hidden::test_addlist_iterator_obj[urlutils-fallback.QueryParamDict]",
+      "hidden_tests.test_addlist_hidden::test_addlist_iterator_obj[urlutils.QueryParamDict]",
+      "hidden_tests.test_addlist_hidden::test_addlist_map_object[dictutils.OMD]",
+      "hidden_tests.test_addlist_hidden::test_addlist_map_object[urlutils-fallback.OMD]",
+      "hidden_tests.test_addlist_hidden::test_addlist_map_object[urlutils-fallback.QueryParamDict]",
+      "hidden_tests.test_addlist_hidden::test_addlist_map_object[urlutils.QueryParamDict]",
+      "hidden_tests.test_addlist_hidden::test_addlist_empty_iterator_creates_no_key[dictutils.OMD]",
+      "hidden_tests.test_addlist_hidden::test_addlist_empty_iterator_creates_no_key[urlutils-fallback.OMD]",
+      "hidden_tests.test_addlist_hidden::test_addlist_empty_iterator_creates_no_key[urlutils-fallback.QueryParamDict]",
+      "hidden_tests.test_addlist_hidden::test_addlist_empty_iterator_creates_no_key[urlutils.QueryParamDict]",
+      "hidden_tests.test_addlist_hidden::test_addlist_mixed_add_order[dictutils.OMD]",
+      "hidden_tests.test_addlist_hidden::test_addlist_mixed_add_order[urlutils-fallback.OMD]",
+      "hidden_tests.test_addlist_hidden::test_addlist_mixed_add_order[urlutils-fallback.QueryParamDict]",
+      "hidden_tests.test_addlist_hidden::test_addlist_mixed_add_order[urlutils.QueryParamDict]",
+      "hidden_tests.test_addlist_hidden::test_addlist_iterator_internal_consistency[dictutils.OMD]",
+      "hidden_tests.test_addlist_hidden::test_addlist_iterator_internal_consistency[urlutils-fallback.OMD]",
+      "hidden_tests.test_addlist_hidden::test_addlist_iterator_internal_consistency[urlutils-fallback.QueryParamDict]",
+      "hidden_tests.test_addlist_hidden::test_addlist_iterator_internal_consistency[urlutils.QueryParamDict]",
+      "hidden_tests.test_addlist_hidden::test_addlist_does_not_alias_input[dictutils.OMD]",
+      "hidden_tests.test_addlist_hidden::test_addlist_does_not_alias_input[urlutils-fallback.OMD]",
+      "hidden_tests.test_addlist_hidden::test_addlist_does_not_alias_input[urlutils-fallback.QueryParamDict]",
+      "hidden_tests.test_addlist_hidden::test_addlist_does_not_alias_input[urlutils.QueryParamDict]",
+      "hidden_tests.test_addlist_hidden::test_url_query_params_addlist_one_shot[urlutils]",
+      "hidden_tests.test_addlist_hidden::test_url_query_params_addlist_one_shot[urlutils-fallback]",
+      "hidden_tests.test_addlist_hidden::test_url_to_text_shows_all_added_values[urlutils]",
+      "hidden_tests.test_addlist_hidden::test_url_to_text_shows_all_added_values[urlutils-fallback]"
+    ]
+  },
+  "alt-1": {
+    "kind": "alt",
+    "description": "independent Sonnet author (saw only upstream/ + TASK.md in a temp workspace outside this repo): list(v) before the emptiness check, in both OrderedMultiDict copies; converged on the upstream approach",
+    "expect": "pass"
+  }
+}

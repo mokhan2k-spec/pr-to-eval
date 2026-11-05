@@ -1,0 +1,9 @@
+{
+  "tasks": [
+    {"id": "more-itertools-1345", "language": "python"},
+    {"id": "boltons-458", "language": "python"},
+    {"id": "es-toolkit-2170", "language": "typescript"}
+  ],
+  "min_flawed": 3,
+  "min_alt": 1
+}

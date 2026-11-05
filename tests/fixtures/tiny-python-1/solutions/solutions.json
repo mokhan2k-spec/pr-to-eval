@@ -1,0 +1,8 @@
+{
+  "reference": {"kind": "reference", "description": "fixture reference fix", "expect": "pass"},
+  "alt-1": {"kind": "alt", "description": "max/min formulation", "author": "fixture", "expect": "pass"},
+  "flawed-1": {"kind": "flawed", "description": "values above high are clamped to low", "expect": "fail",
+               "expect_failing": ["hidden_tests.test_hidden::test_clamp_above"]},
+  "flawed-2": {"kind": "flawed", "description": "correct fix but edits the visible test", "expect": "fail",
+               "expect_failing": ["check:visible-tests-untouched"]}
+}

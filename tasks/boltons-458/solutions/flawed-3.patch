@@ -1,0 +1,38 @@
+--- a/boltons/dictutils.py
++++ b/boltons/dictutils.py
+@@ -67,6 +67,7 @@
+ 
+ """
+ 
++import types
+ from collections.abc import KeysView, ValuesView, ItemsView
+ from itertools import zip_longest
+ 
+@@ -225,6 +226,8 @@
+         Called ``addlist`` for consistency with :meth:`getlist`, but
+         tuples and other sequences and iterables work.
+         """
++        if isinstance(v, types.GeneratorType):
++            v = list(v)
+         if not v:
+             return
+         self_insert = self._insert
+--- a/boltons/urlutils.py
++++ b/boltons/urlutils.py
+@@ -976,6 +976,7 @@
+ # 20161021, used for the QueryParamDict, toward the bottom.
+ """
+ 
++import types
+ from collections.abc import KeysView, ValuesView, ItemsView
+ from itertools import zip_longest
+ 
+@@ -1123,6 +1124,8 @@
+         Called ``addlist`` for consistency with :meth:`getlist`, but
+         tuples and other sequences and iterables work.
+         """
++        if isinstance(v, types.GeneratorType):
++            v = list(v)
+         if not v:
+             return
+         self_insert = self._insert

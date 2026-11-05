@@ -1,0 +1,54 @@
+{
+  "id": "es-toolkit-2170",
+  "language": "typescript",
+  "title": "withTimeout: timer and abort listener left behind after the operation settles",
+  "upstream": {
+    "repo": "toss/es-toolkit",
+    "pr": 2170,
+    "pr_url": "https://github.com/toss/es-toolkit/pull/2170",
+    "base_sha": "ee2676d1f56b06dd846401e8af2afb4b7e5c6264",
+    "merge_sha": "7a185f9d4b0ddbef98b83955905a77e6004458d4",
+    "license": "MIT",
+    "vendored_files": [
+      "LICENSE",
+      "src/_internal/DOMException.ts",
+      "src/_internal/globalThis.ts",
+      "src/error/AbortError.ts",
+      "src/error/TimeoutError.ts",
+      "src/promise/delay.ts",
+      "src/promise/timeout.ts",
+      "src/promise/withTimeout.spec.ts",
+      "src/promise/withTimeout.ts"
+    ]
+  },
+  "source_files": [
+    "src/promise/withTimeout.ts"
+  ],
+  "hidden_dest": "hidden_tests",
+  "test_cmd": [
+    "npx",
+    "vitest",
+    "run",
+    "--root",
+    ".",
+    "--config",
+    "hidden_tests/vitest.config.mts",
+    "--reporter=junit",
+    "--outputFile={junit}"
+  ],
+  "timeout_s": 180,
+  "mutation": {
+    "targets": [
+      {
+        "file": "src/promise/withTimeout.ts",
+        "lines": [
+          [
+            45,
+            62
+          ]
+        ]
+      }
+    ]
+  },
+  "base_note": "Squash-merged: merge_sha's parent is 58a6592b7e, one commit ahead of the PR base ee2676d. That commit touches only src/compat/string/split and three compat/_internal unicode helpers, none of which are vendored or touched by the fix."
+}

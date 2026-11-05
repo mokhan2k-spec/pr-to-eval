@@ -1,0 +1,4 @@
+{
+  "tiny/mathx.py:3:lt-le:1": "value == low returns low either way, so < vs <= is not observable",
+  "tiny/mathx.py:5:gt-ge:1": "value == high returns high either way, so > vs >= is not observable"
+}
