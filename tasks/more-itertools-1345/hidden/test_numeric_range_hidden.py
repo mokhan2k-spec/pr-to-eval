@@ -154,6 +154,8 @@ class AboveMaxsizeBehaviourTests(TestCase):
             with self.subTest(other=other):
                 self.assertFalse(r == other)
                 self.assertTrue(r != other)
+                # exactly False, as built-in range returns, not merely falsy
+                self.assertIs(r.__eq__(other), False)
         self.assertFalse(mi.numeric_range(0, STOP) == range(0, STOP))
 
     def test_len_still_overflows(self):

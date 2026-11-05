@@ -1,1 +1,5 @@
-{}
+{
+  "more_itertools/more.py:2442:le-lt:1": "At distance == 0 the else branch runs: divmod(0, step) gives q=0, r=0, so n=0; both settling loops are skipped because _before_stop(0) compares start < stop with start == stop. It returns 0, the same as the guarded branch. IEEE, Decimal, Fraction and timedelta subtraction give exactly zero only when the operands are equal.",
+  "more_itertools/more.py:2446:ne-eq:1": "This only changes the initial estimate n by one (q+1 on exact division, q otherwise). The two loops that follow move n down while item n-1 is past stop and up while item n is before stop, so they always settle on the exact count whatever the starting estimate. Only the iteration count changes, never the result.",
+  "more_itertools/more.py:2451:minus1-plus1:1": "The first settling loop over-decrements, stopping at count-2 or 0 instead of count. The second loop (while _before_stop(n): n += 1) then raises n back to the exact count, because items are monotonic in n. The result is identical; only one or two extra iterations run."
+}
