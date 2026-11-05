@@ -36,7 +36,7 @@ def test_a_hit_fails_and_the_allowlist_clears_it(repo, capsys):
     assert run(repo) == 1
     assert "notes.txt:1" in capsys.readouterr().out
     (repo / "allow.json").write_text(json.dumps(
-        [{"path_glob": "notes.txt", "pattern": "*", "reason": "test"}]), encoding="utf-8")
+        [{"path_glob": "notes.txt", "rule": ["windows-user-path", "unix-users-path", "username"], "pattern": "^.+$", "reason": "test"}]), encoding="utf-8")
     assert run(repo) == 0
 
 
@@ -114,3 +114,80 @@ def test_rev_list_failure_is_a_scan_failure(repo, capsys, monkeypatch):
     assert run(repo, "--history") == 2
     assert "git rev-list failed" in capsys.readouterr().out
 
+
+# --- R22: allowlist entries are scoped to rule + path + detected value --------------------
+
+FAKE_OK = "someone@" + "example.com"            # reserved domain (allowlisted by value)
+FAKE_REAL = "real.person@" + "gmail.com"         # obviously fake, but not allowlisted
+ALLOW_EXAMPLE = {"path_glob": "*", "rule": "email", "pattern": "^[^@\\s]+@example[.]com$",
+                 "reason": "reserved example domain"}
+
+
+def test_allowlisted_value_on_its_own_passes():
+    assert pc.scan_text("a.json", f'{{"to": "{FAKE_OK}"}}', [ALLOW_EXAMPLE]) == []
+
+
+def test_allowlisted_value_does_not_hide_a_real_one_on_the_same_line():
+    hits = pc.scan_text("a.json", f'{{"to": "{FAKE_OK}", "cc": "{FAKE_REAL}"}}', [ALLOW_EXAMPLE])
+    assert [(h[2], h[3]) for h in hits] == [("email", FAKE_REAL)]
+
+
+def test_a_rule_mismatch_does_not_exempt():
+    entry = dict(ALLOW_EXAMPLE, rule="phone")
+    assert [h[3] for h in pc.scan_text("a.json", FAKE_OK, [entry])] == [FAKE_OK]
+    entry = dict(ALLOW_EXAMPLE, rule="username")
+    assert pc.scan_text("a.json", f"{FAKE_OK} {NAME}", [dict(ALLOW_EXAMPLE), entry])[0][2] == "username"
+
+
+def test_path_glob_mismatch_does_not_exempt():
+    entry = dict(ALLOW_EXAMPLE, path_glob="docs/*")
+    assert pc.scan_text("a.json", FAKE_OK, [entry])
+    assert pc.scan_text("docs/a.md", FAKE_OK, [entry]) == []
+
+
+LINE = "Author: Jane Doe <jane@" + "example.org>"
+EXACT = {"path_glob": "git-log", "mode": "exact_line", "rule": "email",
+         "pattern": "^Author: Jane Doe <jane@example[.]org>$", "reason": "fake owner line"}
+
+
+def test_exact_line_matches_only_the_whole_line():
+    assert pc.is_allowed([EXACT], "git-log", "email", "jane@example.org", LINE)
+    assert not pc.is_allowed([EXACT], "git-log", "email", "jane@example.org", LINE + " and more")
+    assert not pc.is_allowed([EXACT], "other", "email", "jane@example.org", LINE)
+    assert not pc.is_allowed([EXACT], "git-log", "phone", "jane@example.org", LINE)
+
+
+@pytest.mark.parametrize("pattern", ["Author: Jane", "^Author: Jane", "Author: Jane$", "^Author: Jane\\$"])
+def test_exact_line_without_anchors_is_rejected(tmp_path, pattern):
+    f = tmp_path / "allow.json"
+    f.write_text(json.dumps([dict(EXACT, pattern=pattern)]), encoding="utf-8")
+    with pytest.raises(ValueError, match="anchored"):
+        pc.load_allowlist(f)
+
+
+@pytest.mark.parametrize("bad", [
+    {"path_glob": "*", "pattern": "^x$", "reason": "r"},                         # no rule
+    {"path_glob": "*", "rule": "email", "pattern": "*", "reason": "r"},          # not a regex
+    {"path_glob": "*", "rule": "no-such-rule", "pattern": "^x$", "reason": "r"},
+    {"path_glob": "*", "rule": "email", "pattern": "^x$", "reason": " "},
+    {"path_glob": "*", "rule": "email", "pattern": "^x$", "reason": "r", "mode": "line"},
+])
+def test_unscoped_or_malformed_entries_fail_loudly(tmp_path, bad):
+    f = tmp_path / "allow.json"
+    f.write_text(json.dumps([bad]), encoding="utf-8")
+    with pytest.raises(ValueError):
+        pc.load_allowlist(f)
+
+
+def test_the_shipped_allowlist_is_valid():
+    assert pc.load_allowlist()
+
+
+def test_history_exact_line_entry_exempts_only_that_author(repo, capsys):
+    subprocess.run(["git", "config", "user.name", "Jane Doe"], cwd=repo, check=True)
+    subprocess.run(["git", "config", "user.email", "jane@" + "example.org"], cwd=repo, check=True)
+    subprocess.run(["git", "add", "-A"], cwd=repo, check=True)
+    subprocess.run(["git", "commit", "-qm", "one"], cwd=repo, check=True)
+    assert run(repo, "--history") == 1                       # the author email is a hit
+    (repo / "allow.json").write_text(json.dumps([EXACT]), encoding="utf-8")
+    assert run(repo, "--history") == 0

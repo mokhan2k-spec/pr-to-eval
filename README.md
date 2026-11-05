@@ -24,6 +24,13 @@ Every solution of every task is graded by the hidden tests and shell checks, wit
 Mutation testing: small mistakes are injected into the reference solution and the hidden tests must catch them. Survivors must be listed in the task's `equivalent_mutants.json` with a reason.
 
 <!-- mutation-table:start -->
+| Task | Mutants | Killed | Equivalent (justified) | Unjustified survivors | Score |
+|---|---|---|---|---|---|
+| boltons-458 | 26 | 26 | 0 | 0 | 100.0% |
+| es-toolkit-2170 | 5 | 4 | 1 | 0 | 100.0% |
+| more-itertools-1345 | 57 | 54 | 3 | 0 | 100.0% |
+
+**3/3 tasks have no unjustified survivors and no stale equivalent-mutant entries.**
 <!-- mutation-table:end -->
 
 ## Agent runs

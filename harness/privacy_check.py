@@ -6,11 +6,16 @@ Scans tracked files plus untracked-not-ignored files (`git ls-files`), and with 
 the patch text of `git log -p --all`. Prints `path:line: [rule] matched-text` and exits 1
 on any hit not covered by the allowlist in privacy.json:
 
-    [{"path_glob": "LICENSE", "pattern": "copyright", "reason": "..."}]
+    [{"path_glob": "LICENSE", "rule": "username", "pattern": "^muhammed$", "reason": "..."}]
 
-An entry allows a hit when fnmatch(path, path_glob) and `pattern` is "*", or the rule
-name, or a regex that re.search finds (case-insensitive) in the matched text or its line.
-In --history mode a hit is allowed by its file path from the diff header.
+An entry is scoped (R22): it allows a hit only when fnmatch(path, path_glob), the detector
+that fired is `rule` (a detector name, or a list of them), and the regex `pattern` re.searches
+(case-insensitive) the DETECTED VALUE, not the line around it. A line holding an allowed value
+and a real one therefore still reports the real one.
+`"mode": "exact_line"` is the narrow escape hatch: the pattern is matched against the whole
+line instead, must be anchored ^...$ (checked at load; a bad entry fails loudly), and is for one
+precisely identified record only. In --history mode a hit is allowed by its file path from the
+diff header; non-diff lines (commit headers) have the path "git-log".
 """
 from __future__ import annotations
 
@@ -46,29 +51,62 @@ COMPILED = {name: re.compile(rx, re.I if name not in ("aws-key", "github-token",
             for name, rx in RULES.items()}
 
 
+MODES = ("value", "exact_line")
+
+
+def _entry_rules(e: dict) -> list[str]:
+    r = e.get("rule")
+    return [r] if isinstance(r, str) else list(r) if isinstance(r, list) else []
+
+
+def validate_entry(e: dict, where: str = "allowlist") -> None:
+    """Raise ValueError for an entry that is not strictly scoped."""
+    if not isinstance(e, dict):
+        raise ValueError(f"{where}: entry is not an object: {e!r}")
+    missing = [k for k in ("path_glob", "rule", "pattern", "reason") if k not in e]
+    if missing:
+        raise ValueError(f"{where}: entry lacks {missing}: {e}")
+    if not str(e["reason"]).strip() or not str(e["path_glob"]).strip():
+        raise ValueError(f"{where}: path_glob and reason must not be empty: {e}")
+    rules = _entry_rules(e)
+    unknown = [r for r in rules if r not in COMPILED]
+    if not rules or unknown or not all(isinstance(r, str) for r in rules):
+        raise ValueError(f"{where}: rule must be one or more detector names {sorted(COMPILED)}, "
+                         f"got {e.get('rule')!r}: {e}")
+    mode = e.get("mode", "value")
+    if mode not in MODES:
+        raise ValueError(f"{where}: mode must be one of {MODES}, got {mode!r}: {e}")
+    pat = e["pattern"]
+    if not isinstance(pat, str) or not pat:
+        raise ValueError(f"{where}: pattern must be a non-empty regex: {e}")
+    try:
+        re.compile(pat)
+    except re.error as err:
+        raise ValueError(f"{where}: pattern is not a valid regex ({err}): {e}") from err
+    if mode == "exact_line" and not (pat.startswith("^") and pat.endswith("$")
+                                     and not pat.endswith("\\$")):
+        raise ValueError(f"{where}: an exact_line pattern must be anchored ^...$: {e}")
+
+
 def load_allowlist(path: Path = ALLOWLIST_PATH) -> list[dict]:
     try:
         data = json.loads(Path(path).read_text(encoding="utf-8"))
     except FileNotFoundError:
         return []
     for e in data:
-        if not {"path_glob", "pattern", "reason"} <= set(e) or not str(e["reason"]).strip():
-            raise ValueError(f"{path}: every entry needs path_glob, pattern and a reason: {e}")
+        validate_entry(e, str(path))
     return data
 
 
 def is_allowed(allow: list[dict], path: str, rule: str, matched: str, line: str) -> bool:
     for e in allow:
-        if not fnmatch.fnmatch(path, e["path_glob"]):
+        if not fnmatch.fnmatch(path, e["path_glob"]) or rule not in _entry_rules(e):
             continue
-        pat = e["pattern"]
-        if pat == "*" or pat == rule:
-            return True
-        try:
-            if re.search(pat, matched, re.I) or re.search(pat, line, re.I):
+        if e.get("mode", "value") == "exact_line":
+            if re.search(e["pattern"], line):
                 return True
-        except re.error:
-            pass
+        elif re.search(e["pattern"], matched, re.I):
+            return True
     return False
 
 

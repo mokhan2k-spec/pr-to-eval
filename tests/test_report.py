@@ -8,13 +8,15 @@ from harness import agent_runs, llm_grade, report
 from harness.agent_runs import grader_digest, sha256_bytes, sha256_file, task_auditor_digest, task_hash
 from harness.tasks import load_task
 
+from conftest import good_probe_record
+
 
 def jw(path, data):
     path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
 
 
 def fabricate(runs, task, agent, trial, attempt=1, verdict="PASS", source=None, patch=b"diff\n",
-              confirmed=True, llm="graded", clean=True, outcome=None):
+              confirmed=True, llm="graded", clean=True, outcome=None, probe=True):
     """Write one fully consistent attempt dir."""
     d = runs / task.id / agent / f"trial-{trial}" / f"attempt-{attempt}"
     d.mkdir(parents=True)
@@ -23,7 +25,9 @@ def fabricate(runs, task, agent, trial, attempt=1, verdict="PASS", source=None, 
     jw(d / "meta.json", {"status": "complete", "task": task.id, "agent": agent, "trial": trial, "attempt": attempt,
                          "cli_version": "fake 1", "requested_model": "m", "observed_model": "m",
                          "timeout_s": 1200, "requested_effort": None,
-                         "read_scope": "relative" if agent == "claude" else None})
+                         "read_scope": "relative" if agent == "claude" else None,
+                         "boundary": {"statement": "s",
+                                      "probe": good_probe_record(agent, "fake 1") if probe else None}})
     psha = sha256_bytes(patch)
     jw(d / "grade.json", {"verdict": verdict, "patch_sha256": psha, "task_hash": task_hash(task),
                           "grader_digest": grader_digest(task), "tests": {"failed": []}, "checks": {"failed": []}})
@@ -322,9 +326,13 @@ def test_incomplete_attempts(world):
     jw(d / "meta.json", {"status": "incomplete", "error": "Traceback...\nRuntimeError: boom"})
     fabricate(runs, task, "claude", 1, attempt=2)
     report.write_summary(runs)
-    assert check(world) == []                                 # superseded incomplete is allowed
+    # metadata only, no interrupted.json: no longer accepted (R21)
+    assert any("attempt-1: interrupted.json is missing" in p for p in check(world))
+    agent_runs.confirm_interrupted(d, "process died; only meta.json exists")
+    assert check(world) == []                                 # superseded + confirmed interrupted
     text = (runs / "SUMMARY.md").read_text(encoding="utf-8")
     assert "### Incomplete attempts" in text and "RuntimeError: boom" in text
+    (d / "interrupted.json").unlink()
     # as the final attempt it is a problem; a never-finalised one is too
     shutil.rmtree(runs / "tiny-python-1" / "claude" / "trial-1" / "attempt-2")
     assert any("final attempt is incomplete" in p for p in check(world))
@@ -356,3 +364,110 @@ def test_review_required_must_be_cleared(world):
     cls["review_cleared"] = "stdlib import in a test double"
     jw(d / "classification.json", cls)
     assert not any("not cleared" in p for p in check(world))
+
+
+# --- R18: probe evidence on every complete attempt ---------------------------------------------
+
+def set_probe(d, mutate):
+    meta = json.loads((d / "meta.json").read_text(encoding="utf-8"))
+    mutate(meta)
+    jw(d / "meta.json", meta)
+
+
+def test_attempt_without_probe_evidence_is_rejected(world):
+    set_probe(attempt(world), lambda m: m["boundary"].update(probe=None))
+    assert any("attempt-1: meta.boundary.probe is missing" in p for p in check(world))
+    set_probe(attempt(world), lambda m: m.pop("boundary"))
+    assert any("meta.boundary.probe is missing" in p for p in check(world))
+
+
+@pytest.mark.parametrize("field", ["policy_digest", "probe_digest"])
+def test_stale_probe_binding_is_rejected(world, field):
+    set_probe(attempt(world), lambda m: m["boundary"]["probe"]["_binding"].update({field: "0" * 64}))
+    assert any(f"boundary probe {field} is stale" in p for p in check(world))
+
+
+def test_probe_cli_version_must_match_the_attempt(world):
+    set_probe(attempt(world), lambda m: m["boundary"]["probe"]["_binding"].update(cli_version="other 2"))
+    assert any("boundary probe cli_version" in p for p in check(world))
+
+
+def test_failed_probe_verdict_is_rejected(world):
+    set_probe(attempt(world), lambda m: m["boundary"]["probe"].update(net_urllib={"result": "allowed"}))
+    assert any("boundary probe verdict failed" in p and "net_urllib" in p for p in check(world))
+
+
+def test_probe_without_binding_is_rejected(world):
+    set_probe(attempt(world), lambda m: m["boundary"]["probe"].pop("_binding"))
+    assert any("boundary probe has no _binding" in p for p in check(world))
+
+
+def test_superseded_attempt_needs_probe_evidence_too(world):
+    runs, task = world["runs"], world["task"]
+    shutil.rmtree(runs / "tiny-python-1" / "claude" / "trial-1")
+    fabricate(runs, task, "claude", 1, attempt=1, verdict="ERROR", source="environment", probe=False)
+    fabricate(runs, task, "claude", 1, attempt=2)
+    report.write_summary(runs)
+    assert any("attempt-1: meta.boundary.probe is missing" in p for p in check(world))
+
+
+def test_check_does_not_launch_a_cli(world, monkeypatch):
+    def boom(*a, **k):
+        raise AssertionError("report --check must not launch a CLI")
+    monkeypatch.setattr(agent_runs.subprocess, "run", boom)
+    monkeypatch.setattr(agent_runs, "cli_version", boom)
+    assert check(world) == []
+
+
+# --- R21: superseded incomplete attempts need interrupted.json -------------------------------------
+
+@pytest.fixture
+def interrupted(world):
+    runs, task = world["runs"], world["task"]
+    shutil.rmtree(runs / "tiny-python-1" / "claude" / "trial-1")
+    d = runs / "tiny-python-1" / "claude" / "trial-1" / "attempt-1"
+    d.mkdir(parents=True)
+    jw(d / "meta.json", {"status": "incomplete", "error": "RuntimeError: boom"})
+    (d / "transcript.jsonl").write_text("{}\n", encoding="utf-8")
+    fabricate(runs, task, "claude", 1, attempt=2)
+    report.write_summary(runs)
+    return d
+
+
+def test_good_interrupted_record_is_accepted(world, interrupted):
+    agent_runs.confirm_interrupted(interrupted, "grader crashed; transcript salvaged")
+    assert check(world) == []
+
+
+def test_missing_interrupted_record_fails(world, interrupted):
+    assert any("attempt-1: interrupted.json is missing" in p for p in check(world))
+
+
+def test_tampered_salvaged_file_fails(world, interrupted):
+    agent_runs.confirm_interrupted(interrupted, "grader crashed; transcript salvaged")
+    (interrupted / "transcript.jsonl").write_text("tampered\n", encoding="utf-8")
+    assert any("transcript.jsonl changed or is missing (sha256 mismatch)" in p for p in check(world))
+
+
+def test_unlisted_file_and_wrong_unavailable_fail(world, interrupted):
+    agent_runs.confirm_interrupted(interrupted, "grader crashed; transcript salvaged")
+    (interrupted / "final.patch").write_bytes(b"late\n")
+    probs = check(world)
+    assert any("does not list file final.patch" in p for p in probs)
+    assert any("unavailable" in p and "final.patch" in p for p in probs)
+
+
+def test_interrupted_record_must_be_reviewer_confirmed(world, interrupted):
+    agent_runs.confirm_interrupted(interrupted, "grader crashed; transcript salvaged")
+    rec = json.loads((interrupted / "interrupted.json").read_text(encoding="utf-8"))
+    rec.update(confirmed_by="auto", reason=" ")
+    jw(interrupted / "interrupted.json", rec)
+    probs = check(world)
+    assert any("not confirmed by the reviewer" in p for p in probs)
+    assert any("blank reason" in p for p in probs)
+
+
+def test_final_incomplete_attempt_still_fails_even_with_a_record(world, interrupted):
+    agent_runs.confirm_interrupted(interrupted, "grader crashed; transcript salvaged")
+    shutil.rmtree(interrupted.parent / "attempt-2")
+    assert any("final attempt is incomplete" in p for p in check(world))

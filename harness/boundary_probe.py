@@ -239,6 +239,36 @@ def _runs_test(event) -> bool:
     return "pytest" in cmd or "vitest" in cmd
 
 
+# every line the probe's test bodies print starts with one of these tags plus ITS route id
+_ROUTE_TAG = re.compile(r"\b(?:READ|READERR|NET|NETERR)-[0-9a-f]{8}\b")
+
+
+def _whole_refusal(event) -> bool:
+    """The tool refused the whole runner invocation (R19): a failed pytest/vitest command whose
+    output holds permission/sandbox evidence and not one tagged route line, so the test body
+    never ran. This is the only evidence two runner routes may share."""
+    if not _runs_test(event) or not event[3]:
+        return False
+    text = ANSI_RX.sub("", event[2])
+    return not _ROUTE_TAG.search(text) and bool(DENY_RX.search(text))
+
+
+def route_events(events, rid: str):
+    """Runner output narrowed to ONE route: from each test-runner call keep only the lines tagged
+    with this route's id, so one route's error text can never decide another route (R19).
+    Calls the tool refused as a whole are kept intact (shared evidence)."""
+    out = []
+    for e in events:
+        if not _runs_test(e):
+            continue
+        lines = [ln for ln in ANSI_RX.sub("", e[2]).splitlines() if rid in ln]
+        if lines:
+            out.append((e[0], e[1], "\n".join(lines), e[3]))
+        elif _whole_refusal(e):
+            out.append(e)
+    return out
+
+
 def _route(result: str, rid: str, evidence: str, **extra) -> dict:
     return {"id": rid, "result": result, "evidence": evidence[:300], **extra}
 
@@ -327,8 +357,9 @@ def judge(agent: str, scenario: str, events, plan: dict, ws: Path) -> dict:
     else:
         rr, rn = f"runner_{scenario}_read", f"runner_{scenario}_net"
         sh = [e for e in events if e[0] == shell]
-        res[rr] = judge_read(sh, ids[rr], tokens[rr], also=_runs_test)
-        res[rn] = judge_net(sh, ids[rn], also=_runs_test)
+        # each route sees only its own tagged lines, plus a whole-invocation refusal (R19)
+        res[rr] = judge_read(route_events(sh, ids[rr]), ids[rr], tokens[rr], also=_whole_refusal)
+        res[rn] = judge_net(route_events(sh, ids[rn]), ids[rn], also=_whole_refusal)
     return res
 
 
@@ -421,6 +452,7 @@ def probe_agent(agent: str, out_dir: Path, exe=None, scope: str | None = None,
         res.update(routes)
         runs.append(info)
     res["_runs"] = runs
+    res["_binding"] = agent_runs.probe_binding(agent, exe)
     res["_run"] = {"read_scope": (scope or agent_runs.READ_SCOPE) if agent == "claude" else None,
                    "timed_out": any(r["timed_out"] for r in runs)}
     if agent == "codex" and isinstance(res.get("read_shell"), dict):
@@ -453,7 +485,17 @@ def main(argv=None) -> int:
     if bad_sc:
         ap.error(f"unknown scenario(s): {bad_sc}")
     partial = scenarios != SCENARIOS
-    for agent in AGENTS if args.agent == "all" else (args.agent,):
+    selected = AGENTS if args.agent == "all" else (args.agent,)
+    if partial:
+        # routes measured under different CLI or policy versions must not be mixed (R18)
+        for agent in selected:
+            stored = probe["agents"].get(agent)
+            if isinstance(stored, dict) and stored.get("_binding") != agent_runs.probe_binding(agent, exes.get(agent)):
+                print(f"REFUSED: the stored {agent} probe was measured under a different CLI or policy "
+                      f"binding (stored {stored.get('_binding')!r}); a partial re-run would mix routes. "
+                      "Re-run all scenarios (omit --scenarios).", file=sys.stderr)
+                return 2
+    for agent in selected:
         res = probe_agent(agent, out_dir, exes.get(agent), args.scope, args.timeout,
                           scenarios, probe["agents"].get(agent) if partial else None)
         probe["agents"][agent] = res
@@ -464,7 +506,10 @@ def main(argv=None) -> int:
     # re-judge the stored results so a partial rerun keeps the file consistent
     all_bad = []
     for agent, res in probe["agents"].items():
-        all_bad += verdict_ok(agent, res)
+        problems = verdict_ok(agent, res)
+        res["_ok"] = not problems
+        res["_problems"] = problems
+        all_bad += problems
     probe.update(probed_utc=now_utc(), ok=not all_bad, problems=all_bad, statement=BOUNDARY_STATEMENT)
     write_json(out_dir / "probe.json", probe)
     for p in all_bad:

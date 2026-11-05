@@ -11,8 +11,8 @@ import sys
 from pathlib import Path
 
 from .agent_runs import (AGENTS, BOUNDARY_STATEMENT, MAX_ATTEMPTS, TRIALS, TRIAL_RE,
-                         grader_digest, list_attempts, read_json, sha256_file, task_auditor_digest,
-                         task_hash)
+                         grader_digest, interrupted_problems, list_attempts, policy_digest,
+                         probe_digest, read_json, sha256_file, task_auditor_digest, task_hash)
 from .tasks import CORPUS_PATH, RUNS_DIR, TASKS_DIR, TaskError, load_corpus, load_tasks, utf8_stdout
 
 SOURCES = ("agent", "environment", "grader")
@@ -266,6 +266,8 @@ def check(runs_dir: Path, tasks_dir: Path = TASKS_DIR, corpus_path: Path = CORPU
     except TaskError as e:
         return [f"tasks: {e}"]
 
+    cur_probe = {"probe_digest": probe_digest(),
+                 "policy_digest": {a: policy_digest(a) for a in AGENTS}}
     for tid in corpus_ids:
         task = tasks.get(tid)
         if task is None:
@@ -298,8 +300,10 @@ def check(runs_dir: Path, tasks_dir: Path = TASKS_DIR, corpus_path: Path = CORPU
                         # allowed only as a superseded attempt; it used up one attempt
                         if final:
                             problems.append(f"{label}: final attempt is incomplete (retry or investigate)")
-                        elif not meta.get("error"):
-                            problems.append(f"{label}: incomplete attempt without a recorded error")
+                        else:
+                            if not meta.get("error"):
+                                problems.append(f"{label}: incomplete attempt without a recorded error")
+                            problems += [f"{label}: {p}" for p in interrupted_problems(adir)]
                         continue
                     if status != "complete":
                         problems.append(f"{label}: meta.json status is {status!r} (never finalised)")
@@ -311,6 +315,7 @@ def check(runs_dir: Path, tasks_dir: Path = TASKS_DIR, corpus_path: Path = CORPU
                             or cls.get("failure_source") == "environment")
                         if not ok:
                             problems.append(f"{label}: non-final attempt is not confirmed environment/contaminated")
+                    problems += _check_probe(label, agent, meta, cur_probe)
                     problems += _check_attempt(label, adir, cur)
 
     expected = runs_dir / "SUMMARY.md"
@@ -322,6 +327,30 @@ def check(runs_dir: Path, tasks_dir: Path = TASKS_DIR, corpus_path: Path = CORPU
     else:
         if have != want:
             problems.append("SUMMARY.md: differs from the render (run --write)")
+    return problems
+
+
+def _check_probe(label, agent, meta, cur_probe) -> list[str]:
+    """A complete attempt must carry a boundary-probe record that passed and is bound to the
+    CURRENT policy and probe code and to the CLI version the attempt itself ran. No CLI is launched."""
+    from .boundary_probe import verdict_ok
+    b = meta.get("boundary")
+    rec = b.get("probe") if isinstance(b, dict) else None
+    if not isinstance(rec, dict) or not rec:
+        return [f"{label}: meta.boundary.probe is missing (no boundary probe evidence)"]
+    problems = [f"{label}: boundary probe verdict failed: {p}" for p in verdict_ok(agent, rec)]
+    bound = rec.get("_binding")
+    if not isinstance(bound, dict):
+        return problems + [f"{label}: boundary probe has no _binding"]
+    cur_policy = (policy_digest(agent, bound["platform"]) if bound.get("platform")
+                  else cur_probe["policy_digest"].get(agent))
+    if bound.get("policy_digest") != cur_policy:
+        problems.append(f"{label}: boundary probe policy_digest is stale (run policy changed; re-probe)")
+    if bound.get("probe_digest") != cur_probe["probe_digest"]:
+        problems.append(f"{label}: boundary probe probe_digest is stale (boundary_probe.py changed; re-probe)")
+    if bound.get("cli_version") != meta.get("cli_version"):
+        problems.append(f"{label}: boundary probe cli_version {bound.get('cli_version')!r} differs from "
+                        f"the attempt's {meta.get('cli_version')!r}")
     return problems
 
 

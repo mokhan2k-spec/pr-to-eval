@@ -1,6 +1,6 @@
 PYTHON ?= python
 
-.PHONY: setup test validate readme mutation verify-upstream boundary-probe agent-runs regrade confirm report report-check llm-grade privacy
+.PHONY: setup test validate readme mutation verify-upstream boundary-probe agent-runs regrade confirm interrupted report report-check llm-grade privacy
 
 setup:
 	$(PYTHON) -m pip install -r requirements.txt
@@ -37,6 +37,11 @@ regrade:
 # Confirm a classification: make confirm ATTEMPT=runs/<task>/<agent>/trial-<n>/attempt-<k> SOURCE=agent EVIDENCE="..."
 confirm:
 	$(PYTHON) -m harness.agent_runs confirm $(ATTEMPT) --source $(SOURCE) --evidence "$(EVIDENCE)"
+
+# Record an interrupted attempt so it may be retried: make interrupted ATTEMPT=... EVIDENCE="..."
+# (add STALE=--stale-started for an attempt whose process is gone but meta still says started)
+interrupted:
+	$(PYTHON) -m harness.agent_runs confirm $(ATTEMPT) --interrupted $(STALE) --evidence "$(EVIDENCE)"
 
 report:
 	$(PYTHON) -m harness.report --write

@@ -282,7 +282,7 @@ def claude_allowed_tools(ws: Path | None = None, scope: str | None = None) -> li
     if scope == "absolute" and ws is not None:
         fwd = Path(ws).resolve().as_posix()
         m = re.match(r"^([A-Za-z]):/(.*)$", fwd)
-        root = f"//{m.group(1).lower()}/{m.group(2)}" if m else fwd
+        root = f"//{m.group(1).lower()}/{m.group(2)}" if m else "/" + fwd
         file_tools = [f"Read({root}/**)", f"Edit({root}/**)", f"Write({root}/**)"]
     else:
         file_tools = ["Read(./**)", "Edit(./**)", "Write(./**)"]
@@ -292,8 +292,9 @@ def claude_allowed_tools(ws: Path | None = None, scope: str | None = None) -> li
 
 
 def build_command(agent: str, ws: Path, exe=None, scope: str | None = None,
-                  prompt: str | None = None) -> list[str]:
+                  prompt: str | None = None, platform: str | None = None) -> list[str]:
     prompt = prompt or PROMPT
+    platform = platform or sys.platform
     exe = [exe] if isinstance(exe, str) else list(exe) if exe else [agent]
     if agent == "claude":
         return exe + ["-p", prompt, "--model", CLAUDE_MODEL,
@@ -304,7 +305,7 @@ def build_command(agent: str, ws: Path, exe=None, scope: str | None = None,
                       "--output-format", "stream-json", "--verbose"]
     cmd = exe + ["exec", "--ignore-user-config", "--ephemeral", "--skip-git-repo-check",
                  "-s", "workspace-write"]
-    if sys.platform == "win32":
+    if platform == "win32":
         cmd += ["-c", 'windows.sandbox="elevated"']
     cmd += ["-c", "sandbox_workspace_write.network_access=false",
             "-c", "project_doc_max_bytes=0", "-m", CODEX_MODEL,
@@ -336,6 +337,37 @@ def cli_version(agent: str, exe=None) -> str:
         return (res.stdout or res.stderr).strip()
     except (OSError, subprocess.TimeoutExpired) as e:
         return f"error: {type(e).__name__}"
+
+
+def probe_digest() -> str:
+    """sha256 of the boundary probe's code: a probe record is only valid for the probe that made it."""
+    return sha256_bytes((Path(__file__).parent / "boundary_probe.py").read_bytes())
+
+
+_FILE_TOOL_RE = re.compile(r"^(Read|Edit|Write)\(.*\*\*\)$")
+
+
+def policy_digest(agent: str, platform: str | None = None) -> str:
+    """sha256 over the agent's run policy (argv with the workspace as a placeholder, env
+    allowlist NAMES, fixed env values, read scope, model, effort). Machine independent: no
+    absolute paths, no usernames, no env values. The env part uses the ENV_ALLOW policy
+    list, not the keys that happen to be set on this machine. `platform` is the one the run
+    was made on (the codex argv differs on Windows), so a Linux checkout can verify it."""
+    cmd = build_command(agent, Path("<WS>"), exe=[agent], platform=platform)
+    if agent == "claude" and READ_SCOPE == "absolute":
+        cmd = [_FILE_TOOL_RE.sub(r"\1(<WS>/**)", c) for c in cmd]
+    fixed = {"CLAUDE_CODE_DISABLE_CLAUDE_MDS": "1"} if agent == "claude" else {}
+    policy = {"agent": agent, "argv": cmd,
+              "env_names": sorted(set(ENV_ALLOW) | set(fixed)), "env_fixed": fixed,
+              "read_scope": READ_SCOPE if agent == "claude" else None,
+              "model": CLAUDE_MODEL if agent == "claude" else CODEX_MODEL,
+              "effort": None if agent == "claude" else CODEX_EFFORT}
+    return sha256_bytes(json.dumps(policy, sort_keys=True, ensure_ascii=True).encode("utf-8"))
+
+
+def probe_binding(agent: str, exe=None) -> dict:
+    return {"cli_version": cli_version(agent, exe), "policy_digest": policy_digest(agent),
+            "probe_digest": probe_digest(), "platform": sys.platform}
 
 
 # --- workspace and patch capture ------------------------------------------
@@ -458,12 +490,56 @@ def list_attempts(tdir: Path) -> list[tuple[int, Path]]:
     return sorted(out)
 
 
+STANDARD_ARTIFACTS = ("transcript.jsonl", "stderr.txt", "final.patch", "grade.json",
+                      "audit.json", "llm_grade.json", "classification.json")
+INTERRUPTED = "interrupted.json"
+
+
+def interrupted_problems(adir: Path) -> list[str]:
+    """Problems with a reviewer-confirmed interrupted.json (empty = valid)."""
+    adir = Path(adir)
+    rec = read_json(adir / INTERRUPTED)
+    if not isinstance(rec, dict):
+        return [f"{INTERRUPTED} is missing or invalid (run `confirm --interrupted`)"]
+    problems = []
+    if not str(rec.get("reason", "")).strip():
+        problems.append(f"{INTERRUPTED} has a blank reason")
+    if rec.get("confirmed_by") != "reviewer":
+        problems.append(f"{INTERRUPTED} is not confirmed by the reviewer")
+    salvaged = rec.get("salvaged")
+    if not isinstance(salvaged, list) or not all(
+            isinstance(x, dict) and isinstance(x.get("path"), str) for x in salvaged):
+        return problems + [f"{INTERRUPTED} salvaged list is malformed"]
+    listed = set()
+    for x in salvaged:
+        listed.add(x["path"])
+        if sha256_file(adir / x["path"]) != x.get("sha256"):
+            problems.append(f"{INTERRUPTED} salvaged file {x['path']} changed or is missing (sha256 mismatch)")
+    present = {p.relative_to(adir).as_posix() for p in adir.rglob("*") if p.is_file()} - {INTERRUPTED}
+    for extra in sorted(present - listed):
+        problems.append(f"{INTERRUPTED} does not list file {extra}")
+    want = sorted(n for n in STANDARD_ARTIFACTS if not (adir / n).is_file())
+    if sorted(rec.get("unavailable") or []) != want:
+        problems.append(f"{INTERRUPTED} unavailable {sorted(rec.get('unavailable') or [])} "
+                        f"does not match the absent artifacts {want}")
+    return problems
+
+
 def retry_allowed(prev_dir: Path) -> tuple[bool, str]:
     """A new attempt needs the previous attempt's CONFIRMED classification to be
-    environment or contaminated."""
+    environment or contaminated, or (if it never finished) a valid interrupted.json."""
     meta = read_json(prev_dir / "meta.json") or {}
-    if meta.get("status") != "complete":
-        return True, "previous attempt is incomplete"      # it still used up an attempt
+    status = meta.get("status")
+    if status == "started":
+        return False, ("attempt still running or never finalised; finalise it with "
+                       "`confirm --interrupted --stale-started` if the process is gone")
+    if status == "incomplete":
+        bad = interrupted_problems(prev_dir)
+        if bad:
+            return False, "previous attempt is incomplete and not confirmed interrupted: " + "; ".join(bad)
+        return True, ""                                    # it still used up an attempt
+    if status != "complete":
+        return False, f"previous attempt has status {status!r}"
     cls = read_json(prev_dir / "classification.json")
     if not cls:
         return False, "previous attempt has no classification.json"
@@ -514,6 +590,30 @@ def boundary_summary(runs_dir: Path, agent: str):
     if not probe:
         return None
     return (probe.get("agents") or {}).get(agent)
+
+
+def probe_gate(runs_dir: Path, agent: str, exe=None) -> tuple[dict | None, list[str]]:
+    """The agent's boundary-probe record and the reasons it may not be used to launch runs
+    (empty list = go). Read-only apart from `<cli> --version`."""
+    from .boundary_probe import verdict_ok      # lazy: boundary_probe imports this module
+    probe_path = Path(runs_dir) / BOUNDARY_DIR / "probe.json"
+    probe = read_json(probe_path)
+    if not isinstance(probe, dict):
+        return None, [f"{agent}: boundary probe missing ({probe_path}); run harness.boundary_probe first"]
+    rec = (probe.get("agents") or {}).get(agent)
+    if not isinstance(rec, dict):
+        return None, [f"{agent}: no boundary probe record in {probe_path}"]
+    problems = [f"{agent}: probe verdict failed: {p}" for p in verdict_ok(agent, rec)]
+    bound = rec.get("_binding")
+    if not isinstance(bound, dict):
+        problems.append(f"{agent}: probe record has no _binding (re-run the probe)")
+    else:
+        cur = probe_binding(agent, exe)
+        for k in ("cli_version", "policy_digest", "probe_digest"):
+            if bound.get(k) != cur[k]:
+                problems.append(f"{agent}: probe _binding.{k} is stale (probed {bound.get(k)!r}, "
+                                f"now {cur[k]!r}); re-run the probe")
+    return rec, problems
 
 
 # --- one attempt -----------------------------------------------------------
@@ -700,6 +800,39 @@ def confirm_attempt(attempt_dir: Path, source: str, evidence: str,
     return cls
 
 
+def confirm_interrupted(attempt_dir: Path, evidence: str, stale_started: bool = False) -> dict:
+    """Reviewer's record that an attempt died without finishing: lists what was salvaged and
+    what is unavailable, so the attempt can be superseded by a retry."""
+    attempt_dir = Path(attempt_dir)
+    if not evidence or not evidence.strip():
+        raise ValueError("evidence must be non-blank (say how you know the attempt is dead)")
+    meta = read_json(attempt_dir / "meta.json")
+    if not isinstance(meta, dict):
+        raise ValueError(f"{attempt_dir}: missing or invalid meta.json")
+    status = meta.get("status")
+    if status == "complete":
+        raise ValueError(f"{attempt_dir}: attempt is complete; use a normal confirm")
+    if status == "started" and not stale_started:
+        raise ValueError(f"{attempt_dir}: attempt is still marked started; pass --stale-started "
+                         "if the process is gone")
+    if status not in ("started", "incomplete"):
+        raise ValueError(f"{attempt_dir}: attempt status {status!r} cannot be confirmed interrupted")
+    if (attempt_dir / INTERRUPTED).exists():
+        raise ValueError(f"{attempt_dir}: {INTERRUPTED} already exists")
+    if status == "started":
+        meta.update(status="incomplete", ended_utc=now_utc(),
+                    error="stale started attempt finalised by reviewer")
+        write_json(attempt_dir / "meta.json", meta)
+    files = sorted(p for p in attempt_dir.rglob("*") if p.is_file())
+    rec = {"reason": evidence.strip(), "status_before": status,
+           "salvaged": [{"path": p.relative_to(attempt_dir).as_posix(), "sha256": sha256_file(p)}
+                        for p in files],
+           "unavailable": [n for n in STANDARD_ARTIFACTS if not (attempt_dir / n).is_file()],
+           "confirmed_by": "reviewer", "confirmed_utc": now_utc()}
+    write_json(attempt_dir / INTERRUPTED, rec)
+    return rec
+
+
 def _mark_stale(attempt_dir: Path, names, reason: str) -> None:
     for name in names:
         data = read_json(attempt_dir / name)
@@ -797,6 +930,15 @@ def cmd_regrade(args) -> int:
 
 def cmd_confirm(args) -> int:
     try:
+        if args.interrupted:
+            rec = confirm_interrupted(Path(args.attempt_dir), args.evidence, args.stale_started)
+            print(f"confirmed interrupted: {len(rec['salvaged'])} file(s) salvaged, "
+                  f"unavailable={rec['unavailable']}")
+            return 0
+        if args.stale_started:
+            raise ValueError("--stale-started only goes with --interrupted")
+        if not args.source:
+            raise ValueError("--source is required (unless --interrupted)")
         cls = confirm_attempt(Path(args.attempt_dir), args.source, args.evidence,
                               args.audit_false_positive, args.review_cleared)
     except ValueError as e:
@@ -822,9 +964,16 @@ def main(argv=None) -> int:
     if argv and argv[0] == "confirm":
         ap = argparse.ArgumentParser(prog="harness.agent_runs confirm")
         ap.add_argument("attempt_dir")
-        ap.add_argument("--source", required=True,
-                        choices=("agent", "environment", "grader", "contaminated", "pass"))
+        ap.add_argument("--source",
+                        choices=("agent", "environment", "grader", "contaminated", "pass"),
+                        help="required unless --interrupted")
         ap.add_argument("--evidence", required=True)
+        ap.add_argument("--interrupted", action="store_true",
+                        help="record that the attempt died unfinished (writes interrupted.json "
+                        "listing salvaged files and unavailable artifacts); --source not needed")
+        ap.add_argument("--stale-started", action="store_true",
+                        help="with --interrupted: also accept a 'started' attempt whose process "
+                        "is gone, finalising it as incomplete first")
         ap.add_argument("--audit-false-positive", action="store_true",
                         help="the audit hits were reviewed and are not contamination")
         ap.add_argument("--review-cleared", help="why the audit's review_required host-access "
@@ -868,7 +1017,20 @@ def main(argv=None) -> int:
                     print(f"{t.id}/{a}/trial-{n}: skipped ({why or 'done'})")
                 else:
                     jobs.append((t, a, n, m))
+    gate_problems: list[str] = []
+    for a in agents:
+        _, probs = probe_gate(runs_dir, a, exes.get(a))
+        gate_problems += probs
+        print(f"[probe-gate] {a}: " + ("ok" if not probs else "REFUSED"))
+    if gate_problems and not args.dry_run:
+        for p in gate_problems:
+            print(f"error: {p}", file=sys.stderr)
+        print("no jobs launched: the boundary probe must pass for every selected agent",
+              file=sys.stderr)
+        return 2
     if args.dry_run:
+        for p in gate_problems:
+            print(f"[dry-run] probe problem: {p}")
         for t, a, n, m in jobs:
             ws = runs_root() / t.id / a / f"trial-{n}" / f"attempt-{m}-<rand8>"
             print(f"[dry-run] {t.id}/{a}/trial-{n}/attempt-{m}  cwd={ws}")

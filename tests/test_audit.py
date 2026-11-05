@@ -256,3 +256,68 @@ def test_colon_plus_escaped_newline_is_not_a_drive_path():
     assert audit.audit_transcript(claude(tool("Bash", command="python - <<'E'\n" + code + "\nE")))["hits"] == []
     real = "type " + "C:" + chr(92) + "new" + chr(92) + "x.txt"
     assert audit.audit_transcript(claude(tool("Bash", command=real)))["hits"]
+
+
+# --- R20: the hidden-identifier check scans what the agent SAW ---------------------------
+
+from pathlib import Path
+
+FIXTURES = Path(__file__).parent / "fixtures"
+R20_IDS = ["test_secret_behaviour_xyz", "test_other_hidden_case_abc"]
+
+
+def _hid(res):
+    return [(h["where"], h["text"]) for h in res["hits"] if h["kind"] == "hidden-identifier"]
+
+
+def test_claude_identifier_only_in_a_tool_result_is_contamination():
+    t = (FIXTURES / "r3_claude_tool_result.jsonl").read_text(encoding="utf-8")
+    # nothing the agent wrote carries the identifiers: the call/text view is clean
+    assert audit.transcript_text_fields(audit.extract_tool_calls(t)).count("test_secret") == 0
+    res = audit.audit_transcript(t, leak_ids=R20_IDS)
+    assert not res["clean"] and kinds(res) == ["hidden-identifier"]
+    wheres = {w for w, _ in _hid(res)}
+    assert "record 2 tool_result" in wheres            # string content
+    assert "record 4 tool_result" in wheres            # list-of-text content
+    assert "record 4 tool_use_result" in wheres        # the structured echo of the same result
+    assert any("test_secret_behaviour_xyz" in x for _, x in _hid(res))
+    assert any("test_other_hidden_case_abc" in x for _, x in _hid(res))
+
+
+def test_codex_identifier_only_in_aggregated_output_is_contamination():
+    t = (FIXTURES / "r3_codex_aggregated_output.jsonl").read_text(encoding="utf-8")
+    assert "test_secret" not in audit.transcript_text_fields(audit.extract_tool_calls(t))
+    res = audit.audit_transcript(t, leak_ids=R20_IDS)
+    assert not res["clean"] and kinds(res) == ["hidden-identifier"]
+    assert [w for w, _ in _hid(res)] == ["record 2 aggregated_output"]
+
+
+def test_tool_result_without_the_identifier_stays_clean():
+    for name in ("r3_claude_tool_result.jsonl", "r3_codex_aggregated_output.jsonl"):
+        t = (FIXTURES / name).read_text(encoding="utf-8")
+        assert audit.audit_transcript(t, leak_ids=["test_never_printed_anywhere"])["clean"], name
+        assert audit.audit_transcript(t)["clean"], name        # no leak ids: nothing to find
+
+
+def test_codex_other_output_fields_are_scanned():
+    t = codex({"type": "mcp_tool_call", "server": "s", "tool": "t", "arguments": {},
+               "result": {"content": [{"type": "text", "text": "saw test_secret_behaviour_xyz"}]}})
+    # (an mcp_tool_call is also dumped whole into the call view, so the old location may appear too)
+    assert "record 1 result" in [w for w, _ in _hid(audit.audit_transcript(t, leak_ids=R20_IDS))]
+
+
+def test_results_stay_out_of_the_other_rules():
+    # widening is limited to the hidden-identifier check: a tool result that mentions a
+    # forbidden string or an outside path still does not count (file contents, docs, man pages)
+    ev = {"type": "user", "message": {"content": [
+        {"type": "tool_result", "tool_use_id": "t", "content": "see /pull/3 and C:\\Users\\bob\\x"}]}}
+    assert audit.audit_transcript(json.dumps(ev), leak_ids=R20_IDS)["clean"]
+
+
+def test_extract_tool_results_shapes():
+    t = (FIXTURES / "r3_claude_tool_result.jsonl").read_text(encoding="utf-8")
+    got = {(r["line"], r["field"]) for r in audit.extract_tool_results(t)}
+    assert got == {(2, "tool_result"), (4, "tool_result"), (4, "tool_use_result")}
+    t = (FIXTURES / "r3_codex_aggregated_output.jsonl").read_text(encoding="utf-8")
+    assert {(r["line"], r["field"]) for r in audit.extract_tool_results(t)} == {(2, "aggregated_output")}
+    assert audit.extract_tool_results("not json\n{broken\n[1]\n") == []

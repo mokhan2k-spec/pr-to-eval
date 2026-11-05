@@ -91,21 +91,6 @@ def test_permission_denied_read_is_denied():
     assert bp.judge_read(events, RID, TOKEN, ("Read",))["result"] == "denied"
 
 
-def test_runner_route_correlates_by_marker_and_test_runner():
-    out = f"READ-{RID} {TOKEN}\nNET-{NID} 403\n1 passed"
-    events = [sh("python -m pytest -q -s test_probe.py", out)]
-    assert bp.judge_read(events, RID, TOKEN, also=bp._runs_test)["result"] == "allowed"
-    assert bp.judge_net(events, NID, also=bp._runs_test)["result"] == "allowed"
-    out = f"READERR-{RID} FileNotFoundError [Errno 2] No such file\nNETERR-{NID} URLError getaddrinfo failed"
-    events = [sh("python -m pytest -q -s test_probe.py", out)]
-    assert bp.judge_read(events, RID, TOKEN, also=bp._runs_test)["result"] == "inconclusive"
-    assert bp.judge_net(events, NID, also=bp._runs_test)["result"] == "inconclusive"
-    out = f"READERR-{RID} PermissionError [Errno 13] Permission denied: 'x'\nNETERR-{NID} OSError [WinError 10013]"
-    events = [sh("python -m pytest -q -s test_probe.py", out)]
-    assert bp.judge_read(events, RID, TOKEN, also=bp._runs_test)["result"] == "denied"
-    assert bp.judge_net(events, NID, also=bp._runs_test)["result"] == "denied"
-
-
 def test_search_tool_allowed_only_if_result_names_the_canary():
     ok = [ev("Grep", {"pattern": TOKEN, "path": "C:/x"}, f"Found 1 file\nC:/x/_canary-{RID}.txt")]
     assert bp.judge_search(ok, RID, TOKEN)["result"] == "allowed"
@@ -199,3 +184,183 @@ def test_partial_rerun_keeps_prior_routes(monkeypatch, tmp_path):
                                                    {"scenario": s, "timed_out": False}))
     res = bp.probe_agent("claude", tmp_path, scenarios=("vitest",), prior=prior)
     assert res["read_shell"]["result"] == "denied" and res["runner_vitest_net"]["result"] == "allowed"
+
+
+# --- R19: runner routes must not share denial evidence -----------------------------------
+
+import json
+from pathlib import Path
+
+from harness import agent_runs
+
+
+def _claude_transcript(cmd, out, err):
+    use = {"type": "assistant", "message": {"content": [
+        {"type": "tool_use", "id": "t1", "name": "Bash", "input": {"command": cmd}}]}}
+    res = {"type": "user", "message": {"content": [
+        {"type": "tool_result", "tool_use_id": "t1", "content": out, "is_error": err}]}}
+    return json.dumps(use) + "\n" + json.dumps(res)
+
+
+def _codex_transcript(cmd, out, err):
+    return json.dumps({"type": "item.completed", "item": {
+        "id": "i1", "type": "command_execution", "command": cmd, "aggregated_output": out,
+        "exit_code": 1 if err else 0}})
+
+
+def runner(agent, scenario, read_out, net_out="", *, extra="", whole=None, err=False):
+    """Judge one runner scenario from a synthetic transcript in the agent's real format.
+    read_out/net_out are the lines the test body printed; `whole` replaces the entire output."""
+    plan = bp.scenario_plan(agent, scenario)
+    rid, nid = plan["ids"][f"runner_{scenario}_read"], plan["ids"][f"runner_{scenario}_net"]
+    token = plan["tokens"][f"runner_{scenario}_read"]
+    out = whole if whole is not None else "\n".join(
+        x.format(rid=rid, nid=nid, token=token) for x in (read_out, net_out, extra) if x)
+    cmd = "python -m pytest -q -s test_probe.py" if scenario == "pytest" else "npx vitest run probe.test.ts"
+    make, parse = ((_claude_transcript, bp._claude_events) if agent == "claude"
+                   else (_codex_transcript, bp._codex_events))
+    events = parse(make(cmd, out, err))
+    assert events, "synthetic transcript did not parse"
+    res = bp.judge(agent, scenario, events, plan, Path("/nonexistent"))
+    return res[f"runner_{scenario}_read"], res[f"runner_{scenario}_net"]
+
+
+RUNNER = pytest.mark.parametrize("agent,scenario", [
+    ("claude", "pytest"), ("claude", "vitest"), ("codex", "pytest"), ("codex", "vitest")])
+
+READ_MISSING = "READERR-{rid} FileNotFoundError [Errno 2] No such file or directory: 'x'"
+READ_DENIED = "READERR-{rid} PermissionError [Errno 13] Permission denied: 'x'"
+READ_OK = "READ-{rid} {token}"
+NET_BLOCKED = "NETERR-{nid} OSError [WinError 10013] forbidden by its access permissions"
+NET_DNS = "NETERR-{nid} URLError <urlopen error [Errno 11001] getaddrinfo failed>"
+
+
+@RUNNER
+def test_inconclusive_read_does_not_borrow_the_net_denial(agent, scenario):
+    rd, nt = runner(agent, scenario, READ_MISSING, NET_BLOCKED)
+    assert rd["result"] == "inconclusive"
+    assert nt["result"] == "denied"
+
+
+@RUNNER
+def test_inconclusive_net_does_not_borrow_the_read_denial(agent, scenario):
+    rd, nt = runner(agent, scenario, READ_DENIED, NET_DNS)
+    assert rd["result"] == "denied"
+    assert nt["result"] == "inconclusive"
+
+
+@RUNNER
+def test_both_routes_tagged_denied_are_both_denied(agent, scenario):
+    rd, nt = runner(agent, scenario, READ_DENIED, NET_BLOCKED)
+    assert (rd["result"], nt["result"]) == ("denied", "denied")
+
+
+@RUNNER
+def test_whole_invocation_refused_denies_both_routes(agent, scenario):
+    whole = ("Claude requested permissions to use Bash, but you haven't granted it yet."
+             if agent == "claude" else "command blocked by sandbox policy")
+    rd, nt = runner(agent, scenario, "", whole=whole, err=True)
+    assert (rd["result"], nt["result"]) == ("denied", "denied")
+
+
+@RUNNER
+def test_denial_text_without_a_failed_call_is_not_shared_evidence(agent, scenario):
+    rd, nt = runner(agent, scenario, "", whole="Permission denied (some page text)", err=False)
+    assert (rd["result"], nt["result"]) == ("inconclusive", "inconclusive")
+
+
+@RUNNER
+def test_untagged_denial_noise_next_to_tagged_lines_decides_nothing(agent, scenario):
+    rd, nt = runner(agent, scenario, READ_MISSING, NET_DNS,
+                    extra="Permission denied: some-other-file\nWinError 10013 elsewhere", err=True)
+    assert (rd["result"], nt["result"]) == ("inconclusive", "inconclusive")
+
+
+@RUNNER
+def test_http_status_on_the_net_line_is_allowed_even_when_read_is_denied(agent, scenario):
+    rd, nt = runner(agent, scenario, READ_DENIED, "NET-{nid} 403")
+    assert rd["result"] == "denied"
+    assert nt["result"] == "allowed" and nt["http_status"] == 403
+
+
+@RUNNER
+def test_read_content_is_allowed_while_net_is_denied(agent, scenario):
+    rd, nt = runner(agent, scenario, READ_OK, NET_BLOCKED)
+    assert (rd["result"], nt["result"]) == ("allowed", "denied")
+
+
+def test_every_printed_line_of_the_runner_bodies_carries_its_route_id():
+    rid, nid = "ab12cd34", "ef56ab78"
+    for body in (bp._py_test("c.txt", rid, nid), bp._ts_test("c.txt", rid, nid)):
+        printed = [ln for ln in body.splitlines() if "print(" in ln or "console.log(" in ln]
+        assert len(printed) >= 4
+        for ln in printed:
+            assert f"-{rid}" in ln or f"-{nid}" in ln, ln
+
+
+# --- R18, probe side: binding recorded, partial re-run refused on a mismatch --------------
+
+BIND_A = {"cli_version": "1.0.0", "policy_digest": "p-a", "probe_digest": "d-a"}
+BIND_B = {"cli_version": "1.0.1", "policy_digest": "p-a", "probe_digest": "d-a"}
+
+
+def _fake_scenario(a, s, o, e, sc, t):
+    return ({"runner_vitest_net": {"result": "allowed", "evidence": ""}}, {"scenario": s, "timed_out": False})
+
+
+def _bind(monkeypatch, binding):
+    monkeypatch.setattr(agent_runs, "probe_binding", lambda agent, exe=None: binding, raising=False)
+
+
+def test_probe_agent_records_the_binding(monkeypatch, tmp_path):
+    seen = []
+    monkeypatch.setattr(agent_runs, "probe_binding",
+                        lambda agent, exe=None: seen.append((agent, exe)) or BIND_A, raising=False)
+    monkeypatch.setattr(bp, "probe_scenario", _fake_scenario)
+    res = bp.probe_agent("claude", tmp_path, exe="X", scenarios=("vitest",))
+    assert res["_binding"] == BIND_A and seen == [("claude", "X")]
+
+
+def _stored(tmp_path, binding):
+    d = tmp_path / bp.BOUNDARY_DIR
+    d.mkdir()
+    rec = {"read_shell": {"result": "denied", "evidence": ""}}
+    if binding is not None:
+        rec["_binding"] = binding
+    (d / "probe.json").write_text(json.dumps({"agents": {"claude": rec}}), encoding="utf-8")
+    return d / "probe.json"
+
+
+def _main(tmp_path, *extra):
+    return bp.main(["--agent", "claude", "--runs-dir", str(tmp_path), "--scenarios", "vitest", *extra])
+
+
+@pytest.mark.parametrize("stored", [BIND_B, None])
+def test_partial_rerun_refused_when_the_stored_binding_differs(monkeypatch, tmp_path, capsys, stored):
+    f = _stored(tmp_path, stored)
+    before = f.read_text(encoding="utf-8")
+    _bind(monkeypatch, BIND_A)
+    monkeypatch.setattr(bp, "probe_agent", lambda *a, **k: pytest.fail("must not run any agent"))
+    assert _main(tmp_path) == 2
+    err = capsys.readouterr().err
+    assert "REFUSED" in err and "Re-run all scenarios" in err
+    assert f.read_text(encoding="utf-8") == before
+
+
+def test_partial_rerun_proceeds_when_the_binding_matches_and_stores_ok_and_problems(monkeypatch, tmp_path):
+    f = _stored(tmp_path, BIND_A)
+    _bind(monkeypatch, BIND_A)
+    monkeypatch.setattr(bp, "probe_scenario", _fake_scenario)
+    assert _main(tmp_path) == 1                    # the stored record is incomplete, so the verdict fails
+    rec = json.loads(f.read_text(encoding="utf-8"))["agents"]["claude"]
+    assert rec["_binding"] == BIND_A and rec["read_shell"]["result"] == "denied"
+    assert rec["_ok"] is False and rec["_problems"] and rec["_problems"] == bp.verdict_ok("claude", rec)
+
+
+def test_full_run_is_not_blocked_by_a_stale_binding(monkeypatch, tmp_path):
+    _stored(tmp_path, BIND_B)
+    _bind(monkeypatch, BIND_A)
+    monkeypatch.setattr(bp, "probe_scenario", _fake_scenario)
+    assert bp.main(["--agent", "claude", "--runs-dir", str(tmp_path)]) == 1     # ran; verdict fails
+    rec = json.loads((tmp_path / bp.BOUNDARY_DIR / "probe.json").read_text(encoding="utf-8"))["agents"]["claude"]
+    assert rec["_binding"] == BIND_A and "read_shell" not in rec

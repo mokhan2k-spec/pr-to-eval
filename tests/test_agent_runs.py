@@ -10,6 +10,8 @@ import pytest
 from harness import agent_runs
 from harness.tasks import load_task
 
+from conftest import good_probe_record
+
 FAKE = str(Path(__file__).parent / "fake_agent.py")
 
 
@@ -31,6 +33,26 @@ def env(tmp_path, monkeypatch, fixtures_dir):
     monkeypatch.setattr(agent_runs, "grade_patch", stub_grade)
     return {"runs": tmp_path / "runs", "task": load_task(fixtures_dir / "tiny-python-1"),
             "tasks_dir": fixtures_dir, "tmp": tmp_path}
+
+
+def install_probe(env, agents=("claude", "codex"), cli="fake-cli 1.0", mutate=None):
+    """Write runs/_boundary/probe.json with good records bound to the fake CLI."""
+    recs = {a: good_probe_record(a, cli) for a in agents}
+    if mutate:
+        mutate(recs)
+    d = env["runs"] / "_boundary"
+    d.mkdir(parents=True, exist_ok=True)
+    (d / "probe.json").write_text(json.dumps({"agents": recs}), encoding="utf-8")
+
+
+def fake_launcher(env):
+    launcher = env["tmp"] / ("fake.cmd" if os.name == "nt" else "fake.sh")
+    if os.name == "nt":
+        launcher.write_text(f'@"{sys.executable}" "{FAKE}" %*\r\n')
+    else:
+        launcher.write_text(f'#!/bin/sh\nexec "{sys.executable}" "{FAKE}" "$@"\n')
+        launcher.chmod(0o755)
+    return launcher
 
 
 def run(env, mode, agent="claude", trial=1, attempt=1, **kw):
@@ -214,12 +236,8 @@ def test_main_skips_finished_trials_and_runs_the_rest(env, capsys):
             "--task", "tiny-python-1", "--agent", "claude", "--trials", "1-2", "--jobs", "2",
             "--exe", ""]
     # --exe takes a bare path; run the fake through python by wrapping with a launcher script
-    launcher = env["tmp"] / ("fake.cmd" if os.name == "nt" else "fake.sh")
-    if os.name == "nt":
-        launcher.write_text(f'@"{sys.executable}" "{FAKE}" %*\r\n')
-    else:
-        launcher.write_text(f'#!/bin/sh\nexec "{sys.executable}" "{FAKE}" "$@"\n')
-        launcher.chmod(0o755)
+    launcher = fake_launcher(env)
+    install_probe(env)
     argv[-1] = "claude=" + str(launcher)
     assert agent_runs.main(argv) == 0
     out = capsys.readouterr().out
@@ -366,7 +384,10 @@ def test_exception_after_launch_leaves_an_incomplete_attempt(env, monkeypatch):
     assert (adir / "transcript.jsonl").is_file()                 # salvaged
     assert "+    if value > high:" in (adir / "final.patch").read_text(encoding="utf-8")
     assert not (adir / "grade.json").exists()
-    # never deleted, counts toward the allowance, retry is allowed once
+    # never deleted, counts toward the allowance; a retry needs the reviewer's interrupted.json
+    n, why = agent_runs.plan_attempt(env["runs"], env["task"].id, "claude", 1)
+    assert n is None and "interrupted.json" in why
+    agent_runs.confirm_interrupted(adir, "grader crashed in the harness; transcript and patch kept")
     assert agent_runs.plan_attempt(env["runs"], env["task"].id, "claude", 1) == (2, "")
     monkeypatch.setattr(agent_runs, "grade_patch", stub_grade)
     assert run(env, "commit", attempt=2)["status"] == "complete"
@@ -375,8 +396,8 @@ def test_exception_after_launch_leaves_an_incomplete_attempt(env, monkeypatch):
 
 def test_incomplete_counts_toward_max_attempts(env, monkeypatch):
     monkeypatch.setattr(agent_runs, "grade_patch", _boom)
-    run(env, "nochange")
-    run(env, "nochange", attempt=2)
+    for k in (1, 2):
+        agent_runs.confirm_interrupted(run(env, "nochange", attempt=k)["dir"], "harness crash")
     n, why = agent_runs.plan_attempt(env["runs"], env["task"].id, "claude", 1)
     assert n is None and "max 2" in why
 
@@ -401,12 +422,8 @@ def test_started_meta_is_written_before_launch(env, monkeypatch):
 
 def test_batch_exits_nonzero_when_an_attempt_is_incomplete(env, monkeypatch, capsys):
     monkeypatch.setattr(agent_runs, "grade_patch", _boom)
-    launcher = env["tmp"] / ("fake.cmd" if os.name == "nt" else "fake.sh")
-    if os.name == "nt":
-        launcher.write_text(f'@"{sys.executable}" "{FAKE}" %*\r\n')
-    else:
-        launcher.write_text(f'#!/bin/sh\nexec "{sys.executable}" "{FAKE}" "$@"\n')
-        launcher.chmod(0o755)
+    launcher = fake_launcher(env)
+    install_probe(env)
     argv = ["--tasks-dir", str(env["tasks_dir"]), "--runs-dir", str(env["runs"]),
             "--task", "tiny-python-1", "--agent", "claude", "--trials", "1", "--exe",
             "claude=" + str(launcher)]
@@ -463,3 +480,182 @@ def test_confirm_needs_review_clearance(env):
         agent_runs.confirm_attempt(r["dir"], "pass", "tests passed")
     cls = agent_runs.confirm_attempt(r["dir"], "pass", "tests passed", review_cleared="socket is stdlib import for a test double")
     assert cls["review_cleared"].startswith("socket") and cls["outcome"] == "pass"
+
+
+# --- R18: the boundary probe gates execution -------------------------------------------
+
+def gate_argv(env, launcher, *extra):
+    return ["--tasks-dir", str(env["tasks_dir"]), "--runs-dir", str(env["runs"]),
+            "--task", "tiny-python-1", "--agent", "claude", "--trials", "1",
+            "--exe", "claude=" + str(launcher), *extra]
+
+
+def attempt_dirs(env):
+    return list((env["runs"] / "tiny-python-1").glob("*/trial-*/attempt-*"))
+
+
+def test_missing_probe_refuses_the_launch(env, capsys):
+    rc = agent_runs.main(gate_argv(env, fake_launcher(env)))
+    cap = capsys.readouterr()
+    assert rc == 2 and "boundary probe missing" in cap.err
+    assert attempt_dirs(env) == []
+
+
+def test_missing_agent_record_refuses(env, capsys):
+    install_probe(env, agents=("codex",))
+    assert agent_runs.main(gate_argv(env, fake_launcher(env))) == 2
+    assert "no boundary probe record" in capsys.readouterr().err and attempt_dirs(env) == []
+
+
+def test_failed_probe_refuses(env, capsys):
+    def breakit(recs):
+        recs["claude"]["net_urllib"] = {"result": "allowed"}
+    install_probe(env, mutate=breakit)
+    assert agent_runs.main(gate_argv(env, fake_launcher(env))) == 2
+    assert "net_urllib is allowed (must be denied)" in capsys.readouterr().err
+    assert attempt_dirs(env) == []
+
+
+def test_probe_without_binding_refuses(env, capsys):
+    install_probe(env, mutate=lambda recs: recs["claude"].pop("_binding"))
+    assert agent_runs.main(gate_argv(env, fake_launcher(env))) == 2
+    assert "no _binding" in capsys.readouterr().err and attempt_dirs(env) == []
+
+
+@pytest.mark.parametrize("field", ["policy_digest", "probe_digest", "cli_version"])
+def test_stale_binding_refuses(env, capsys, field):
+    def stale(recs):
+        recs["claude"]["_binding"][field] = "stale"
+    install_probe(env, mutate=stale)
+    assert agent_runs.main(gate_argv(env, fake_launcher(env))) == 2
+    assert f"_binding.{field} is stale" in capsys.readouterr().err and attempt_dirs(env) == []
+
+
+def test_changed_policy_makes_the_probe_stale(env, monkeypatch, capsys):
+    install_probe(env)
+    monkeypatch.setattr(agent_runs, "CLAUDE_MODEL", "other-model")
+    assert agent_runs.main(gate_argv(env, fake_launcher(env))) == 2
+    assert "_binding.policy_digest is stale" in capsys.readouterr().err
+
+
+def test_good_probe_launches_and_embeds_the_record(env, capsys):
+    install_probe(env)
+    assert agent_runs.main(gate_argv(env, fake_launcher(env))) == 0
+    (adir,) = attempt_dirs(env)
+    meta = json.loads((adir / "meta.json").read_text(encoding="utf-8"))
+    probe = meta["boundary"]["probe"]
+    assert probe["_binding"]["policy_digest"] == agent_runs.policy_digest("claude")
+    assert probe["_binding"]["cli_version"] == meta["cli_version"] == "fake-cli 1.0"
+
+
+def test_dry_run_reports_the_gate_but_does_not_fail(env, capsys):
+    rc = agent_runs.main(gate_argv(env, fake_launcher(env), "--dry-run"))
+    out = capsys.readouterr().out
+    assert rc == 0 and "[probe-gate] claude: REFUSED" in out and "probe problem" in out
+    assert attempt_dirs(env) == []
+
+
+def test_policy_and_probe_digests_are_deterministic(tmp_path, monkeypatch):
+    for agent in agent_runs.AGENTS:
+        a = agent_runs.policy_digest(agent)
+        assert a == agent_runs.policy_digest(agent) and len(a) == 64
+        monkeypatch.chdir(tmp_path)
+        assert agent_runs.policy_digest(agent) == a
+    assert agent_runs.policy_digest("claude") != agent_runs.policy_digest("codex")
+    assert agent_runs.probe_digest() == agent_runs.sha256_file(
+        Path(agent_runs.__file__).parent / "boundary_probe.py")
+    monkeypatch.setattr(agent_runs, "READ_SCOPE", "absolute")
+    absolute = agent_runs.policy_digest("claude")
+    monkeypatch.chdir(tmp_path.parent)
+    assert agent_runs.policy_digest("claude") == absolute != agent_runs.policy_digest("codex")
+
+
+def test_policy_digest_tracks_policy(monkeypatch):
+    base = agent_runs.policy_digest("codex")
+    monkeypatch.setattr(agent_runs, "CODEX_EFFORT", "high")
+    assert agent_runs.policy_digest("codex") != base
+    claude = agent_runs.policy_digest("claude")
+    monkeypatch.setattr(agent_runs, "ENV_ALLOW", agent_runs.ENV_ALLOW + ["EXTRA"])
+    assert agent_runs.policy_digest("claude") != claude
+
+
+def test_probe_binding_shape():
+    b = agent_runs.probe_binding("claude", fake("commit"))
+    assert b == {"cli_version": "fake-cli 1.0", "policy_digest": agent_runs.policy_digest("claude"),
+                 "probe_digest": agent_runs.probe_digest(), "platform": agent_runs.sys.platform}
+
+
+# --- R21: attempt lifecycle ---------------------------------------------------------------
+
+def make_attempt(env, status, trial=1, files=("transcript.jsonl",)):
+    d = env["runs"] / "tiny-python-1" / "claude" / f"trial-{trial}" / "attempt-1"
+    d.mkdir(parents=True)
+    (d / "meta.json").write_text(json.dumps({"status": status, "error": "boom"}), encoding="utf-8")
+    for f in files:
+        (d / f).write_text("x\n", encoding="utf-8")
+    return d
+
+
+def plan(env):
+    return agent_runs.plan_attempt(env["runs"], "tiny-python-1", "claude", 1)
+
+
+def test_started_attempt_blocks_a_retry(env):
+    d = make_attempt(env, "started")
+    n, why = plan(env)
+    assert n is None and "confirm --interrupted --stale-started" in why
+    with pytest.raises(ValueError, match="stale-started"):
+        agent_runs.confirm_interrupted(d, "process gone")
+    assert not (d / "interrupted.json").exists()
+
+
+def test_stale_started_is_finalised_then_confirmed(env):
+    d = make_attempt(env, "started")
+    rec = agent_runs.confirm_interrupted(d, "process gone, no python.exe running", stale_started=True)
+    meta = json.loads((d / "meta.json").read_text(encoding="utf-8"))
+    assert meta["status"] == "incomplete" and meta["error"] == "stale started attempt finalised by reviewer"
+    assert rec["status_before"] == "started" and rec["confirmed_by"] == "reviewer"
+    assert plan(env) == (2, "")
+
+
+def test_incomplete_needs_interrupted_json_for_a_retry(env):
+    d = make_attempt(env, "incomplete")
+    n, why = plan(env)
+    assert n is None and "interrupted.json" in why
+    rec = agent_runs.confirm_interrupted(d, "grader crashed; transcript kept")
+    assert sorted(x["path"] for x in rec["salvaged"]) == ["meta.json", "transcript.jsonl"]
+    assert rec["unavailable"] == ["stderr.txt", "final.patch", "grade.json", "audit.json",
+                                  "llm_grade.json", "classification.json"]
+    assert plan(env) == (2, "")
+    (d / "transcript.jsonl").write_text("tampered\n", encoding="utf-8")     # salvage no longer matches
+    n, why = plan(env)
+    assert n is None and "sha256 mismatch" in why
+
+
+def test_confirm_interrupted_refuses_complete_and_blank_evidence(env):
+    d = make_attempt(env, "complete")
+    with pytest.raises(ValueError, match="complete"):
+        agent_runs.confirm_interrupted(d, "x")
+    d2 = make_attempt(env, "incomplete", trial=2)
+    with pytest.raises(ValueError, match="evidence"):
+        agent_runs.confirm_interrupted(d2, "  ")
+
+
+def test_confirm_interrupted_cli_needs_no_source(env, capsys):
+    d = make_attempt(env, "started")
+    assert agent_runs.main(["confirm", str(d), "--interrupted", "--evidence", "gone"]) == 1
+    assert agent_runs.main(["confirm", str(d), "--interrupted", "--stale-started",
+                            "--evidence", "gone"]) == 0
+    assert (d / "interrupted.json").is_file()
+    assert agent_runs.main(["confirm", str(d), "--evidence", "x"]) == 1        # --source still needed
+    assert agent_runs.main(["confirm", str(d), "--source", "agent", "--evidence", "x"]) == 1
+
+
+def test_policy_digest_is_pinned_to_the_run_platform(monkeypatch):
+    """A probe bound on Windows must verify from a Linux checkout: the digest takes the
+    platform the run was made on, not the checker's."""
+    win = agent_runs.policy_digest("codex", "win32")
+    lin = agent_runs.policy_digest("codex", "linux")
+    assert win != lin  # codex adds windows.sandbox on Windows
+    monkeypatch.setattr(agent_runs.sys, "platform", "linux")
+    assert agent_runs.policy_digest("codex", "win32") == win

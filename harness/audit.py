@@ -6,6 +6,8 @@ EVERY tool call and flags:
   canary      the task canary string in the transcript or the patch
   string      a forbidden string in a tool call, the agent's own text, or the patch
               (github.com, pr-to-eval, the upstream slug, /pull/, hidden_tests, ...)
+  hidden-identifier  a hidden-test identifier in a tool call, the agent's text, the patch, or
+              a tool RESULT (Claude tool_result, Codex aggregated_output): `record N <field>` (R20)
 Workspace paths in a stored transcript are the token <WS>; the audit therefore gives
 the same answer on the raw and the redacted text.
 
@@ -165,6 +167,56 @@ def extract_tool_calls(transcript: str) -> list[dict]:
     return calls
 
 
+# Codex item fields that carry what a tool printed back to the agent
+_CODEX_RESULT_FIELDS = ("aggregated_output", "output", "result", "error", "stdout", "stderr")
+
+
+def _result_strings(value) -> list[str]:
+    """Every string a tool result holds: a plain string, list-of-blocks text, or nested JSON."""
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, list):
+        return [s for v in value for s in _result_strings(v)]
+    if isinstance(value, dict):
+        return [s for k, v in value.items() if k != "type" for s in _result_strings(v)]
+    return []
+
+
+def extract_tool_results(transcript: str) -> list[dict]:
+    """What the agent SAW come back from its tools: [{line, field, text}, ...]. Claude
+    `tool_result` blocks (string or list-of-text content) and the `tool_use_result` echo, Codex
+    `aggregated_output` and the other item output fields. `line` is the 1-based transcript record."""
+    out: list[dict] = []
+    for n, line in enumerate(transcript.splitlines(), 1):
+        line = line.strip()
+        if not line.startswith("{"):
+            continue
+        try:
+            ev = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(ev, dict):
+            continue
+        item = ev.get("item")
+        if isinstance(item, dict):  # Codex
+            for field in _CODEX_RESULT_FIELDS:
+                for text in _result_strings(item.get(field)):
+                    if text:
+                        out.append({"line": n, "field": field, "text": text})
+            continue
+        msg = ev.get("message")
+        if isinstance(msg, dict) and isinstance(msg.get("content"), list):
+            for block in msg["content"]:
+                if isinstance(block, dict) and block.get("type") == "tool_result":
+                    for text in _result_strings(block.get("content")):
+                        if text:
+                            out.append({"line": n, "field": "tool_result", "text": text})
+        for text in _result_strings(ev.get("tool_use_result")):
+            if text:
+                out.append({"line": n, "field": "tool_use_result", "text": text})
+    return out
+
+
 def _hit(kind: str, where: str, text: str) -> dict:
     text = text.replace("\n", " ")
     return {"kind": kind, "where": where, "text": text[:200]}
@@ -220,9 +272,14 @@ def audit_transcript(transcript: str, patch: str = "", canary: str | None = None
             for s in forbidden:
                 if s.lower() in low:
                     add("string", "patch", f"{s!r} in {ln}"[:200])
+    results = extract_tool_results(transcript) if leak_ids else []
     for ident in leak_ids or []:
         if ident in transcript_text_fields(calls) or ident in patch:
             add("hidden-identifier", "transcript/patch", f"hidden-test identifier {ident!r}")
+        for r in results:          # printed by agent-run code, or read back by a tool (R20)
+            if ident in r["text"]:
+                add("hidden-identifier", f"record {r['line']} {r['field']}",
+                    f"hidden-test identifier {ident!r}")
     review = host_access_scan(calls, patch)
     return {"clean": not hits, "hits": hits, "tool_calls": len(calls), "review_required": review,
             "auditor_digest": auditor_digest(leak_ids)}
