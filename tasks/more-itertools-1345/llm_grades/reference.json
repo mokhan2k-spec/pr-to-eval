@@ -1,0 +1,11 @@
+{
+  "verdict": "PASS",
+  "correctness": 3,
+  "scope": 3,
+  "reasons": "`numeric_range.__init__` precomputes `self._len` as a plain int, and `__len__` returns it. Using `_len` in `__eq__` and `__hash__` therefore avoids the ssize_t limit, and the rest of both methods compares or hashes start, step and length, which is correct for any size. The hash scheme is unchanged, so it still matches the built-in `range`, `len()` still raises `OverflowError` for huge ranges, and the change is a two-line edit with no API change. I did not run the code or tests. This rests on my recollection of the library source, not on a check of the repo.",
+  "model": "sonnet",
+  "model_ids": [
+    "claude-sonnet-5-5"
+  ],
+  "raw_text": "{\"verdict\": \"PASS\", \"correctness\": 3, \"scope\": 3, \"reasons\": \"`numeric_range.__init__` precomputes `self._len` as a plain int, and `__len__` returns it. Using `_len` in `__eq__` and `__hash__` therefore avoids the ssize_t limit, and the rest of both methods compares or hashes start, step and length, which is correct for any size. The hash scheme is unchanged, so it still matches the built-in `range`, `len()` still raises `OverflowError` for huge ranges, and the change is a two-line edit with no API change. I did not run the code or tests. This rests on my recollection of the library source, not on a check of the repo.\"}"
+}

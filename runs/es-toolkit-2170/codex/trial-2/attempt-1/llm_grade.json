@@ -1,0 +1,15 @@
+{
+  "status": "graded",
+  "verdict": "PASS",
+  "correctness": 3,
+  "scope": 3,
+  "reasons": "The `finally` block in `withTimeout.ts` aborts an internal controller. That clears the `timeout()` timer on resolve, reject, sync throw and timeout. It also removes the `abortHandler` listener from the caller's signal on every path. An already-aborted signal is handled by aborting the internal controller up front and not attaching a listener. The race with `timeout(ms, ...)` is unchanged, so `TimeoutError` still comes from a slow `run()`. Results and rejection reasons pass through through `await`, with no wrapping. Aborting the caller's signal still just aborts the internal signal, which lifts the deadline and does not reject. The signature is unchanged. The change touches only `src/promise/withTimeout.ts` and its spec. I could not see `timeout.ts`, so I am assuming it clears its timer on abort without rejecting, as the existing semantics imply. The added tests check timer count and listener removal on all four outcomes.",
+  "model": "sonnet",
+  "model_ids": [
+    "claude-sonnet-5-5"
+  ],
+  "raw_text": "{\"verdict\": \"PASS\", \"correctness\": 3, \"scope\": 3, \"reasons\": \"The `finally` block in `withTimeout.ts` aborts an internal controller. That clears the `timeout()` timer on resolve, reject, sync throw and timeout. It also removes the `abortHandler` listener from the caller's signal on every path. An already-aborted signal is handled by aborting the internal controller up front and not attaching a listener. The race with `timeout(ms, ...)` is unchanged, so `TimeoutError` still comes from a slow `run()`. Results and rejection reasons pass through through `await`, with no wrapping. Aborting the caller's signal still just aborts the internal signal, which lifts the deadline and does not reject. The signature is unchanged. The change touches only `src/promise/withTimeout.ts` and its spec. I could not see `timeout.ts`, so I am assuming it clears its timer on abort without rejecting, as the existing semantics imply. The added tests check timer count and listener removal on all four outcomes.\"}",
+  "patch_sha256": "0069f93decff4906554a657a55123f65e87b1ee0be69fa1994f06d9b8523e525",
+  "task_hash": "11c36ed2f4e6538d9199ff27e42b6f067c4765e4238c3e086813d5f7e2aa4c69",
+  "grader_prompt_sha256": "29e0697eaacc8d6a06cd66d7d063dd8683c23acd56a4dd046777536af34a1859"
+}

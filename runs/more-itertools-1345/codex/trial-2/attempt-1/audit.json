@@ -1,0 +1,52 @@
+{
+  "clean": false,
+  "hits": [
+    {
+      "kind": "path",
+      "where": "line 4 command_execution.command",
+      "text": "<HOME>\\\\.codex\\\\RTK.md"
+    }
+  ],
+  "tool_calls": 10,
+  "review_required": [
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 4 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command \"Get-Content TASK.md; if (Test-Path AGENTS.md) { Get-Content AGENTS.md }; if (Test-Path <HOME>\\\\.codex\\\\RTK.md) { Get-Content "
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 6 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command \"rg -n 'class numeric_range|def __eq__|def __hash__|def __len__|class NumericRangeTests' more_itertools/more.py tests/test_mor"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 8 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command \"Select-String -Path more_itertools/more.py,tests/test_more.py -Pattern 'class numeric_range','class NumericRangeTests'\""
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 10 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command 'Get-Content more_itertools/more.py | Select-Object -Skip 2275 -First 340; Get-Content tests/test_more.py | Select-Object -Ski"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 15 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command 'python -m pytest tests/test_more.py -k NumericRange'"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 17 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command 'git diff --stat; git diff -- more_itertools/more.py tests/test_more.py'"
+    }
+  ],
+  "auditor_digest": "abfe585480a38ae6d34bc5d2e6dfbc6d613c214f83a768c23d6b72260acd470f",
+  "transcript_sha256": "734ee449f6b4462e2cbc4e7c3ab789651302a9cd5edaf418058d98ca662bc7a0",
+  "patch_sha256": "fd19427a75f997c19daf9e62938903eef0edb442d9a808ad33e2cf27329afe59"
+}

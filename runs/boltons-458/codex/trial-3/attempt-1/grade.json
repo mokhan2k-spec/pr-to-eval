@@ -1,0 +1,24 @@
+{
+  "verdict": "PASS",
+  "tests": {
+    "total": 212,
+    "passed": 212,
+    "failed": [],
+    "skipped": [],
+    "missing": []
+  },
+  "checks": {
+    "total": 3,
+    "passed": 3,
+    "failed": []
+  },
+  "runner": {
+    "exit": 0,
+    "timed_out": false,
+    "junit_ok": true,
+    "diag_tail": "........................................................................ [ 33%]\n........................................................................ [ 67%]\n....................................................................     [100%]\n212 passed in 0.44s\n"
+  },
+  "patch_sha256": "f159bb1ee676f25b04a56d82a293d821e54dbdfd36bb19e08904d0b48c21434d",
+  "task_hash": "15d4cc1347391bba6591bded02eb1ba55a8598271705e7aa3d5b862312038edb",
+  "grader_digest": "4b3012df0d7d13812ff175006435cedbdbffd2d5105703a8a00e886fbb96fd57"
+}

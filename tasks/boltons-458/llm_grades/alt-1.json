@@ -1,0 +1,11 @@
+{
+  "verdict": "PASS",
+  "correctness": 3,
+  "scope": 2,
+  "reasons": "Both copies (dictutils.py and urlutils.py) now materialise the iterable with list(v) before the truthiness check and before traversal. This keeps all values in yield order. An empty iterator gives an empty list, so the function returns early and does not create the key. Lists and tuples behave as before. The diff touches only the two source files, with one added line and a comment in each. It adds no regression test, which is acceptable.",
+  "model": "sonnet",
+  "model_ids": [
+    "claude-sonnet-5-5"
+  ],
+  "raw_text": "{\"verdict\": \"PASS\", \"correctness\": 3, \"scope\": 2, \"reasons\": \"Both copies (dictutils.py and urlutils.py) now materialise the iterable with list(v) before the truthiness check and before traversal. This keeps all values in yield order. An empty iterator gives an empty list, so the function returns early and does not create the key. Lists and tuples behave as before. The diff touches only the two source files, with one added line and a comment in each. It adds no regression test, which is acceptable.\"}"
+}

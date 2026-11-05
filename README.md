@@ -21,25 +21,25 @@ Every solution of every task is graded by the hidden tests and shell checks, wit
 <!-- validation-table:start -->
 | Task | Lang | Upstream PR | Solution | Kind | Hidden tests | Shell checks | LLM grader (recorded) | Verdict | Expected | Match |
 |---|---|---|---|---|---|---|---|---|---|---|
-| boltons-458 | python | [#458](https://github.com/mahmoud/boltons/pull/458) | reference | reference | 212/212 | 3/3 | — | PASS | PASS | yes |
-| boltons-458 | python | [#458](https://github.com/mahmoud/boltons/pull/458) | alt-1 | alt | 212/212 | 3/3 | — | PASS | PASS | yes |
-| boltons-458 | python | [#458](https://github.com/mahmoud/boltons/pull/458) | alt-3 | alt | 212/212 | 3/3 | — | PASS | PASS | yes |
-| boltons-458 | python | [#458](https://github.com/mahmoud/boltons/pull/458) | flawed-1 | flawed | 196/212 | 3/3 | — | FAIL | FAIL | yes |
-| boltons-458 | python | [#458](https://github.com/mahmoud/boltons/pull/458) | flawed-2 | flawed | 205/212 | 3/3 | — | FAIL | FAIL | yes |
-| boltons-458 | python | [#458](https://github.com/mahmoud/boltons/pull/458) | flawed-3 | flawed | 183/212 | 3/3 | — | FAIL | FAIL | yes |
-| es-toolkit-2170 | typescript | [#2170](https://github.com/toss/es-toolkit/pull/2170) | reference | reference | 17/17 | 3/3 | — | PASS | PASS | yes |
-| es-toolkit-2170 | typescript | [#2170](https://github.com/toss/es-toolkit/pull/2170) | alt-1 | alt | 17/17 | 3/3 | — | PASS | PASS | yes |
-| es-toolkit-2170 | typescript | [#2170](https://github.com/toss/es-toolkit/pull/2170) | alt-3 | alt | 17/17 | 3/3 | — | PASS | PASS | yes |
-| es-toolkit-2170 | typescript | [#2170](https://github.com/toss/es-toolkit/pull/2170) | flawed-1 | flawed | 14/17 | 3/3 | — | FAIL | FAIL | yes |
-| es-toolkit-2170 | typescript | [#2170](https://github.com/toss/es-toolkit/pull/2170) | flawed-2 | flawed | 13/17 | 3/3 | — | FAIL | FAIL | yes |
-| es-toolkit-2170 | typescript | [#2170](https://github.com/toss/es-toolkit/pull/2170) | flawed-3 | flawed | 13/17 | 3/3 | — | FAIL | FAIL | yes |
-| more-itertools-1345 | python | [#1345](https://github.com/more-itertools/more-itertools/pull/1345) | reference | reference | 42/42 | 3/3 | — | PASS | PASS | yes |
-| more-itertools-1345 | python | [#1345](https://github.com/more-itertools/more-itertools/pull/1345) | alt-1 | alt | 42/42 | 3/3 | — | PASS | PASS | yes |
-| more-itertools-1345 | python | [#1345](https://github.com/more-itertools/more-itertools/pull/1345) | alt-3 | alt | 42/42 | 3/3 | — | PASS | PASS | yes |
-| more-itertools-1345 | python | [#1345](https://github.com/more-itertools/more-itertools/pull/1345) | flawed-1 | flawed | 34/42 | 3/3 | — | FAIL | FAIL | yes |
-| more-itertools-1345 | python | [#1345](https://github.com/more-itertools/more-itertools/pull/1345) | flawed-2 | flawed | 35/42 | 3/3 | — | FAIL | FAIL | yes |
-| more-itertools-1345 | python | [#1345](https://github.com/more-itertools/more-itertools/pull/1345) | flawed-3 | flawed | 38/42 | 3/3 | — | FAIL | FAIL | yes |
-| more-itertools-1345 | python | [#1345](https://github.com/more-itertools/more-itertools/pull/1345) | flawed-4 | flawed | 36/42 | 2/3 | — | FAIL | FAIL | yes |
+| boltons-458 | python | [#458](https://github.com/mahmoud/boltons/pull/458) | reference | reference | 212/212 | 3/3 | PASS | PASS | PASS | yes |
+| boltons-458 | python | [#458](https://github.com/mahmoud/boltons/pull/458) | alt-1 | alt | 212/212 | 3/3 | PASS | PASS | PASS | yes |
+| boltons-458 | python | [#458](https://github.com/mahmoud/boltons/pull/458) | alt-3 | alt | 212/212 | 3/3 | PASS | PASS | PASS | yes |
+| boltons-458 | python | [#458](https://github.com/mahmoud/boltons/pull/458) | flawed-1 | flawed | 196/212 | 3/3 | FAIL | FAIL | FAIL | yes |
+| boltons-458 | python | [#458](https://github.com/mahmoud/boltons/pull/458) | flawed-2 | flawed | 205/212 | 3/3 | FAIL | FAIL | FAIL | yes |
+| boltons-458 | python | [#458](https://github.com/mahmoud/boltons/pull/458) | flawed-3 | flawed | 183/212 | 3/3 | FAIL | FAIL | FAIL | yes |
+| es-toolkit-2170 | typescript | [#2170](https://github.com/toss/es-toolkit/pull/2170) | reference | reference | 17/17 | 3/3 | PASS | PASS | PASS | yes |
+| es-toolkit-2170 | typescript | [#2170](https://github.com/toss/es-toolkit/pull/2170) | alt-1 | alt | 17/17 | 3/3 | PASS | PASS | PASS | yes |
+| es-toolkit-2170 | typescript | [#2170](https://github.com/toss/es-toolkit/pull/2170) | alt-3 | alt | 17/17 | 3/3 | PASS | PASS | PASS | yes |
+| es-toolkit-2170 | typescript | [#2170](https://github.com/toss/es-toolkit/pull/2170) | flawed-1 | flawed | 14/17 | 3/3 | FAIL | FAIL | FAIL | yes |
+| es-toolkit-2170 | typescript | [#2170](https://github.com/toss/es-toolkit/pull/2170) | flawed-2 | flawed | 13/17 | 3/3 | FAIL | FAIL | FAIL | yes |
+| es-toolkit-2170 | typescript | [#2170](https://github.com/toss/es-toolkit/pull/2170) | flawed-3 | flawed | 13/17 | 3/3 | FAIL | FAIL | FAIL | yes |
+| more-itertools-1345 | python | [#1345](https://github.com/more-itertools/more-itertools/pull/1345) | reference | reference | 42/42 | 3/3 | PASS | PASS | PASS | yes |
+| more-itertools-1345 | python | [#1345](https://github.com/more-itertools/more-itertools/pull/1345) | alt-1 | alt | 42/42 | 3/3 | PASS | PASS | PASS | yes |
+| more-itertools-1345 | python | [#1345](https://github.com/more-itertools/more-itertools/pull/1345) | alt-3 | alt | 42/42 | 3/3 | PASS | PASS | PASS | yes |
+| more-itertools-1345 | python | [#1345](https://github.com/more-itertools/more-itertools/pull/1345) | flawed-1 | flawed | 34/42 | 3/3 | FAIL | FAIL | FAIL | yes |
+| more-itertools-1345 | python | [#1345](https://github.com/more-itertools/more-itertools/pull/1345) | flawed-2 | flawed | 35/42 | 3/3 | FAIL | FAIL | FAIL | yes |
+| more-itertools-1345 | python | [#1345](https://github.com/more-itertools/more-itertools/pull/1345) | flawed-3 | flawed | 38/42 | 3/3 | FAIL | FAIL | FAIL | yes |
+| more-itertools-1345 | python | [#1345](https://github.com/more-itertools/more-itertools/pull/1345) | flawed-4 | flawed | 36/42 | 2/3 | FAIL | FAIL | FAIL | yes |
 
 **19/19 solutions match their expected verdict.**
 <!-- validation-table:end -->
@@ -76,6 +76,8 @@ Each task was run 5 times with Claude Code and 5 times with Codex. The full evid
 - Claude: direct reads and network access outside the workspace by its own tools are denied. File tools are path-scoped, and Bash is limited to an allowlist.
 - Codex: network access is denied. Shell reads outside the workspace are detected but not prevented.
 - Code the agent runs, such as its own tests: outside reads and network access are detected by the audit (leak check plus a static scan), NOT prevented.
+
+**Codex results are host-configured, NOT independent.** codex-cli loads the host's personal `~/.codex/AGENTS.md`, and no per-run flag turns that off: `--ignore-user-config` and `project_doc_max_bytes=0` were both tried. The audit shows the agent following it. In all 15 Codex trials it read `~/.codex/RTK.md` from outside its workspace. In 9 of 15 it called the host's local `qwen` helper, and in 6 of those `qwen code` drafted code. These counts come from the transcript audit and may undercount. So each Codex result is labelled "host-configured: personal ~/.codex/AGENTS.md loaded, NOT independent". Those results are kept out of the headline figure and out of every independence claim. The Claude trials ran clean and are the headline. The rerun with an empty `CODEX_HOME` is documented in [grading decision A15](docs/grading-decisions.md).
 
 ## Grading decisions
 

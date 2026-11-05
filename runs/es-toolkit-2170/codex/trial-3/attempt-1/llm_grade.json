@@ -1,0 +1,15 @@
+{
+  "status": "graded",
+  "verdict": "PASS",
+  "correctness": 3,
+  "scope": 3,
+  "reasons": "The `finally` block in `withTimeout.ts` runs on every path (resolve, reject, timeout). It calls `controller.abort()` on a private controller whose signal is passed to `timeout()`, and I'm assuming `timeout()` clears its timer on abort. That is the only way a signal can lift the limit today. It also calls `signal?.removeEventListener('abort', abortHandler)`, which removes the only listener `withTimeout` adds to the caller's signal. An already-aborted signal is handled by aborting the inner controller directly and adding no listener. The race against `timeout()` is kept, so `TimeoutError` still comes from the timeout. Values and rejection reasons pass through unchanged because the result is awaited and rethrown. Aborting the caller's signal only aborts the inner controller, which lifts the deadline without rejecting. The signature is unchanged. Source changes are limited to `src/promise/withTimeout.ts`, and the only other edit is added tests in the spec file.",
+  "model": "sonnet",
+  "model_ids": [
+    "claude-sonnet-5-5"
+  ],
+  "raw_text": "{\"verdict\": \"PASS\", \"correctness\": 3, \"scope\": 3, \"reasons\": \"The `finally` block in `withTimeout.ts` runs on every path (resolve, reject, timeout). It calls `controller.abort()` on a private controller whose signal is passed to `timeout()`, and I'm assuming `timeout()` clears its timer on abort. That is the only way a signal can lift the limit today. It also calls `signal?.removeEventListener('abort', abortHandler)`, which removes the only listener `withTimeout` adds to the caller's signal. An already-aborted signal is handled by aborting the inner controller directly and adding no listener. The race against `timeout()` is kept, so `TimeoutError` still comes from the timeout. Values and rejection reasons pass through unchanged because the result is awaited and rethrown. Aborting the caller's signal only aborts the inner controller, which lifts the deadline without rejecting. The signature is unchanged. Source changes are limited to `src/promise/withTimeout.ts`, and the only other edit is added tests in the spec file.\"}",
+  "patch_sha256": "b6365a2f33076c6915b3971a6389d1f1ca1e0ba816ef3ebc6920cbb94850909d",
+  "task_hash": "11c36ed2f4e6538d9199ff27e42b6f067c4765e4238c3e086813d5f7e2aa4c69",
+  "grader_prompt_sha256": "29e0697eaacc8d6a06cd66d7d063dd8683c23acd56a4dd046777536af34a1859"
+}

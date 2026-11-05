@@ -1,0 +1,11 @@
+{
+  "verdict": "PASS",
+  "correctness": 3,
+  "scope": 3,
+  "reasons": "Both copies of OrderedMultiDict.addlist (boltons/dictutils.py and the private one in boltons/urlutils.py) now run `v = list(v)` before the truth test and before the two traversals. Any one-shot iterable is therefore fully materialised once and all values are kept in yield order. An empty iterable gives an empty list, so the method returns before `setdefault` and the key is not created. Lists and tuples behave as before. The change is two lines plus a comment in each file, with no unrelated edits. I did not run anything.",
+  "model": "sonnet",
+  "model_ids": [
+    "claude-sonnet-5-5"
+  ],
+  "raw_text": "{\"verdict\": \"PASS\", \"correctness\": 3, \"scope\": 3, \"reasons\": \"Both copies of OrderedMultiDict.addlist (boltons/dictutils.py and the private one in boltons/urlutils.py) now run `v = list(v)` before the truth test and before the two traversals. Any one-shot iterable is therefore fully materialised once and all values are kept in yield order. An empty iterable gives an empty list, so the method returns before `setdefault` and the key is not created. Lists and tuples behave as before. The change is two lines plus a comment in each file, with no unrelated edits. I did not run anything.\"}"
+}

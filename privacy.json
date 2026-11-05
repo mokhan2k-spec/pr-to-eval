@@ -36,6 +36,18 @@
     "reason": "doctest URL ftp://user@ftp.debian.org in boltons urlutils.py:708 (public upstream source), echoed in agent transcripts that read that file"
   },
   {
+    "path_glob": "runs/*",
+    "rule": "email",
+    "pattern": "^pedia@hatnote[.]com$",
+    "reason": "the wiki:pedia userinfo of a hatnote.com test-fixture URL in boltons tests/test_urlutils.py:15 (public upstream source), echoed in agent transcripts that read that file"
+  },
+  {
+    "path_glob": "runs/*",
+    "rule": "email",
+    "pattern": "^n[+]?@pytest[.](fixture|mark[.]parametrize)$",
+    "reason": "not an address: a JSON-escaped newline (\n) or diff '+' directly before a pytest decorator in transcript text"
+  },
+  {
     "path_glob": "*",
     "rule": "email",
     "pattern": "^[A-Za-z0-9._%+-]+@anthropic[.]com$",

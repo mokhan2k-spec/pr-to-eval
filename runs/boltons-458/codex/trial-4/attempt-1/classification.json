@@ -1,0 +1,30 @@
+{
+  "outcome": "pass",
+  "failure_source": null,
+  "evidence": "grade.json PASS, 212/212 tests, 3/3 checks. Same minimal fix in both files with tests. Audit: only <HOME>\\.codex\\RTK.md read (plus `qwen status`). Adversarial verifier(s): not refuted (Workflow wf_19cdf924-32e).",
+  "classified_by": "main-seat",
+  "confirmed": true,
+  "confirmed_by": "main-seat",
+  "confirmed_utc": "2026-11-05T23:46:11Z",
+  "review_cleared": "Review entries are powershell.exe wrapper paths; only external read is ~/.codex/RTK.md. No hidden/tasks/runs reads in transcript.",
+  "host_configured": {
+    "reason": "host-configured: personal ~/.codex/AGENTS.md loaded, NOT independent (A15)",
+    "codex_home_reads": [
+      "<HOME>\\\\.codex\\\\RTK.md"
+    ],
+    "other_hits": [],
+    "qwen_calls": [
+      {
+        "where": "line 13 command_execution.command:1",
+        "mode": "code"
+      },
+      {
+        "where": "line 19 command_execution.command:1",
+        "mode": "squash"
+      }
+    ]
+  },
+  "patch_sha256": "6eeded03120f64ff16256192f8208a1f6ffe9bcbef44f7fac9915e4475f33ddc",
+  "grade_sha256": "34f8727c0293e8af817cf1297a99b64b686bb9f1cb0a1b23b5fe8f86e73b6873",
+  "audit_sha256": "7e0d25a8c84e30e12959d5c85682a81d74025bc20a23e20092ec1a2e28f28e7b"
+}

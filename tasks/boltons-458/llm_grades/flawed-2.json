@@ -1,0 +1,11 @@
+{
+  "verdict": "FAIL",
+  "correctness": 1,
+  "scope": 3,
+  "reasons": "Both copies of addlist are patched, but `v = list(v)` comes after the `if not v: return` check. An iterator is always truthy, so an empty generator passes the check. After `list(v)` it is `[]`, and `super().setdefault(k, [])` then creates the key with an empty list. The task says an empty iterable must not create the key, and the rubric caps this case at 1. The scope is minimal and clean.",
+  "model": "sonnet",
+  "model_ids": [
+    "claude-sonnet-5-5"
+  ],
+  "raw_text": "{\"verdict\": \"FAIL\", \"correctness\": 1, \"scope\": 3, \"reasons\": \"Both copies of addlist are patched, but `v = list(v)` comes after the `if not v: return` check. An iterator is always truthy, so an empty generator passes the check. After `list(v)` it is `[]`, and `super().setdefault(k, [])` then creates the key with an empty list. The task says an empty iterable must not create the key, and the rubric caps this case at 1. The scope is minimal and clean.\"}"
+}

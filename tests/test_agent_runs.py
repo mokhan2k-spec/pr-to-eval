@@ -713,3 +713,61 @@ def test_regrade_skips_frozen_attempts_even_with_all(env, capsys, status, confir
     for writer in (agent_runs.regrade_attempt, agent_runs.reaudit_attempt):
         with pytest.raises(ValueError, match="frozen"):
             writer(env["task"], d, force=True)
+
+
+# --- A15: host-configured Codex runs (option C) ------------------------------------------
+
+CODEX_READ = {"kind": "path", "where": "line 4 command_execution.command", "text": "<HOME>\\\\.codex\\\\RTK.md"}
+QWEN_REVIEW = {"reason": "host-access-pattern", "pattern": "absolute-path", "where": "line 8 cmd:1",
+               "text": "powershell.exe -Command 'qwen read a.py -q \"x\"'; qwen code --task \"y\""}
+
+
+def dirty_codex(env, hits=(CODEX_READ,), review=(QWEN_REVIEW,), agent="codex"):
+    r = run(env, "commit", agent=agent)
+    aud = json.loads((r["dir"] / "audit.json").read_text(encoding="utf-8"))
+    aud.update(clean=not hits, hits=list(hits), review_required=list(review))
+    (r["dir"] / "audit.json").write_text(json.dumps(aud), encoding="utf-8")
+    return r["dir"]
+
+
+def test_host_config_evidence_splits_codex_reads_from_other_hits():
+    other = {"kind": "path", "where": "w", "text": "<HOME>\\\\Code\\\\x"}
+    nested = {"kind": "path", "where": "w", "text": "<HOME>\\\\.codex\\\\sessions\\\\a.jsonl"}
+    ev = agent_runs.host_config_evidence({"hits": [CODEX_READ, other, nested],
+                                          "review_required": [QWEN_REVIEW]})
+    assert ev["codex_home_reads"] == [CODEX_READ["text"]]
+    assert ev["other_hits"] == [other["text"], nested["text"]]
+    assert [c["mode"] for c in ev["qwen_calls"]] == ["read"]     # first match per command
+
+
+def test_host_configured_confirm_keeps_the_verdict(env):
+    d = dirty_codex(env)
+    cls = agent_runs.confirm_attempt(d, "pass", "tests passed", review_cleared="qwen helper calls, see A15",
+                                     host_configured="~/.codex/AGENTS.md loaded")
+    assert cls["outcome"] == "pass" and cls["confirmed"]
+    hc = cls["host_configured"]
+    assert hc["reason"] == "~/.codex/AGENTS.md loaded" and hc["codex_home_reads"] == [CODEX_READ["text"]]
+    assert hc["qwen_calls"] and hc["other_hits"] == []
+    assert agent_runs.main(["confirm", str(d), "--source", "pass", "--evidence", "ok",
+                            "--review-cleared", "qwen", "--host-configured", "A15"]) == 0
+
+
+@pytest.mark.parametrize("case,match", [
+    ("blank", "reason"), ("claude", "codex attempts only"), ("contaminated", "cannot be combined"),
+    ("clean", "clean"), ("no_codex_read", "no ~/.codex read"), ("other_hit", "outside ~/.codex")])
+def test_host_configured_refusals(env, case, match):
+    other = {"kind": "path", "where": "w", "text": "<HOME>\\\\Code\\\\x"}
+    hits = {"clean": (), "no_codex_read": (other,), "other_hit": (CODEX_READ, other)}.get(case, (CODEX_READ,))
+    d = dirty_codex(env, hits=hits, agent="claude" if case == "claude" else "codex")
+    source = "contaminated" if case == "contaminated" else "pass"
+    with pytest.raises(ValueError, match=match):
+        agent_runs.confirm_attempt(d, source, "x", review_cleared="qwen",
+                                   host_configured="  " if case == "blank" else "A15")
+
+
+def test_host_configured_other_hits_need_a_false_positive_review(env):
+    other = {"kind": "path", "where": "w", "text": "\\\\("}
+    d = dirty_codex(env, hits=(CODEX_READ, other))
+    cls = agent_runs.confirm_attempt(d, "pass", "x", review_cleared="qwen", host_configured="A15",
+                                     audit_false_positive=True)
+    assert cls["audit_override"] and cls["host_configured"]["other_hits"] == [other["text"]]

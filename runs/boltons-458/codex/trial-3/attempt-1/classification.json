@@ -1,0 +1,30 @@
+{
+  "outcome": "pass",
+  "failure_source": null,
+  "evidence": "grade.json PASS, 212/212 tests, 3/3 checks. Patch is the same `v = list(v)` fix in both OrderedMultiDict classes plus tests/test_addlist_iterables.py. Only audit hit is ~/.codex/RTK.md. Adversarial verifier(s): not refuted (Workflow wf_19cdf924-32e).",
+  "classified_by": "main-seat",
+  "confirmed": true,
+  "confirmed_by": "main-seat",
+  "confirmed_utc": "2026-11-05T23:46:10Z",
+  "review_cleared": "All review_required are powershell.exe wrapper paths; sole external read is ~/.codex/RTK.md. No hidden/tasks/runs access found.",
+  "host_configured": {
+    "reason": "host-configured: personal ~/.codex/AGENTS.md loaded, NOT independent (A15)",
+    "codex_home_reads": [
+      "<HOME>\\\\.codex\\\\RTK.md"
+    ],
+    "other_hits": [],
+    "qwen_calls": [
+      {
+        "where": "line 10 command_execution.command:1",
+        "mode": "code"
+      },
+      {
+        "where": "line 17 command_execution.command:1",
+        "mode": "squash"
+      }
+    ]
+  },
+  "patch_sha256": "f159bb1ee676f25b04a56d82a293d821e54dbdfd36bb19e08904d0b48c21434d",
+  "grade_sha256": "a6b597657e9672d37d6d7379933b61f73cc35e0310701442f2c962133eea9968",
+  "audit_sha256": "5aa574ff64c41c696531bb5ad3a76b6df4085cc24c2d16f73b09936b550335f5"
+}

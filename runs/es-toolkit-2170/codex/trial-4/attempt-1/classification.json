@@ -1,0 +1,26 @@
+{
+  "outcome": "pass",
+  "failure_source": null,
+  "evidence": "grade.json: PASS, 17/17 tests, 3/3 checks. Agent iterated: 'npx vitest' exit 1 on Windows, then 'npx.cmd vitest run src/promise/withTimeout.spec.ts' exit 0. Read ~/.codex/RTK.md at line 6 (the audit hit) and otherwise only workspace files. Adversarial verifier(s): not refuted (Workflow wf_19cdf924-32e).",
+  "classified_by": "main-seat",
+  "confirmed": true,
+  "confirmed_by": "main-seat",
+  "confirmed_utc": "2026-11-05T23:46:11Z",
+  "review_cleared": "Hit is 'if (Test-Path <HOME>\\.codex\\RTK.md) { Get-Content ... }'. The 9 review entries are powershell.exe wrapper paths plus a relative import in the patch.",
+  "host_configured": {
+    "reason": "host-configured: personal ~/.codex/AGENTS.md loaded, NOT independent (A15)",
+    "codex_home_reads": [
+      "<HOME>\\\\.codex\\\\RTK.md"
+    ],
+    "other_hits": [],
+    "qwen_calls": [
+      {
+        "where": "line 15 command_execution.command:1",
+        "mode": "squash"
+      }
+    ]
+  },
+  "patch_sha256": "33a102c2165d9decaa93996da9bf34d30ca70692d8430fa946891ee0d57691b4",
+  "grade_sha256": "20fa15733f31f24f4da473d79d12c28f589a5b730bfdeaf986f7951f0f10c700",
+  "audit_sha256": "4cc029a489e0d6ac783460a64351f14bfe40798e186443f327d7dfd29920fafd"
+}

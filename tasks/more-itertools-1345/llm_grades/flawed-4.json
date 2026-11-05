@@ -1,0 +1,11 @@
+{
+  "verdict": "FAIL",
+  "correctness": 0,
+  "scope": 2,
+  "reasons": "The diff clamps `__len__` to `sys.maxsize`, so `len()` of a longer range no longer raises `OverflowError`, which the task requires to be kept. It also leaves `__eq__` and `__hash__` unchanged. Any equality or hash that goes through `len()` would now treat different huge lengths as equal, which is a guess rather than a correct answer.",
+  "model": "sonnet",
+  "model_ids": [
+    "claude-sonnet-5-5"
+  ],
+  "raw_text": "{\"verdict\": \"FAIL\", \"correctness\": 0, \"scope\": 2, \"reasons\": \"The diff clamps `__len__` to `sys.maxsize`, so `len()` of a longer range no longer raises `OverflowError`, which the task requires to be kept. It also leaves `__eq__` and `__hash__` unchanged. Any equality or hash that goes through `len()` would now treat different huge lengths as equal, which is a guess rather than a correct answer.\"}"
+}

@@ -1,0 +1,30 @@
+{
+  "outcome": "pass",
+  "failure_source": null,
+  "evidence": "grade.json: verdict PASS, 17/17 tests, 3/3 checks, junit_ok. Patch fixes src/promise/withTimeout.ts (own AbortController + abort handler) and adds spec tests. All commands are workspace-relative (Get-Content src/promise/..., npx.cmd vitest run ...). Adversarial verifier(s): not refuted (Workflow wf_19cdf924-32e).",
+  "classified_by": "main-seat",
+  "confirmed": true,
+  "confirmed_by": "main-seat",
+  "confirmed_utc": "2026-11-05T23:46:11Z",
+  "review_cleared": "Only hit is a Test-Path/Get-Content of ~/.codex/RTK.md. The 12 review_required entries are the powershell.exe launcher path wrapper plus a '../error/TimeoutError.ts' import in the patch. No read outside the workspace besides ~/.codex.",
+  "host_configured": {
+    "reason": "host-configured: personal ~/.codex/AGENTS.md loaded, NOT independent (A15)",
+    "codex_home_reads": [
+      "<HOME>\\\\.codex\\\\RTK.md"
+    ],
+    "other_hits": [],
+    "qwen_calls": [
+      {
+        "where": "line 11 command_execution.command:1",
+        "mode": "code"
+      },
+      {
+        "where": "line 16 command_execution.command:1",
+        "mode": "squash"
+      }
+    ]
+  },
+  "patch_sha256": "cfa79eb88c116d54d85dfba77307a4b11385296dfaadfa12b0879efef6d871c4",
+  "grade_sha256": "4fda6ae756a117d7c8838c01613e9edbead0d783c943d40b18903193bc0bf5ec",
+  "audit_sha256": "c1a362177472fb859c0b19fe2358365c997c817e11ab80653f1b87960a6fd54c"
+}

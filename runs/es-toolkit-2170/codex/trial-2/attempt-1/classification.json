@@ -1,0 +1,21 @@
+{
+  "outcome": "pass",
+  "failure_source": null,
+  "evidence": "grade.json: PASS, 17/17 tests, 3/3 checks. Patch rewrites withTimeout with own AbortController, handles already-aborted signal; commands only read src/promise/*, TASK.md, package.json, and run 'npx.cmd --no-install vitest run src/promise/withTimeout.spec.ts' (exit 0). Adversarial verifier(s): not refuted (Workflow wf_19cdf924-32e).",
+  "classified_by": "main-seat",
+  "confirmed": true,
+  "confirmed_by": "main-seat",
+  "confirmed_utc": "2026-11-05T23:46:11Z",
+  "review_cleared": "Sole non-workspace read is 'Get-Content <HOME>\\.codex\\RTK.md'. The 8 review entries are the powershell.exe wrapper path and a relative import in the patch's spec file.",
+  "host_configured": {
+    "reason": "host-configured: personal ~/.codex/AGENTS.md loaded, NOT independent (A15)",
+    "codex_home_reads": [
+      "<HOME>\\\\.codex\\\\RTK.md"
+    ],
+    "other_hits": [],
+    "qwen_calls": []
+  },
+  "patch_sha256": "0069f93decff4906554a657a55123f65e87b1ee0be69fa1994f06d9b8523e525",
+  "grade_sha256": "106f37fb75735970af6b6f67e88bdf3be263b32fb050c29397c3bbb2fbf3cefc",
+  "audit_sha256": "345817974393ff2bdc76b219bed65b8eeb5cfb56ce7649fb46a59913eaebc122"
+}

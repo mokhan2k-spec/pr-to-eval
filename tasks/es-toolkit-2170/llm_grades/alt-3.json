@@ -1,0 +1,11 @@
+{
+  "verdict": "PASS",
+  "correctness": 3,
+  "scope": 3,
+  "reasons": "The `finally` block clears the timer and removes the abort listener on success, on rejection and on a synchronous throw from `run()`. The timeout callback removes the listener itself before rejecting with `TimeoutError`, and `finally` clears the timer again. An abort during the call clears the timer and lifts the deadline, and the race then waits on `run()` alone. An already-aborted signal returns `run()` straight away without starting a timer or adding a listener. The race still rejects with `TimeoutError`, and `run()`'s result or rejection passes through unwrapped. The signature is unchanged. Only `src/promise/withTimeout.ts` is edited. Its `timeout` import is swapped for `TimeoutError`, which the new inline deadline needs. I did not run the tests, and I assumed `new TimeoutError()` gives the default message.",
+  "model": "sonnet",
+  "model_ids": [
+    "claude-sonnet-5-5"
+  ],
+  "raw_text": "{\"verdict\": \"PASS\", \"correctness\": 3, \"scope\": 3, \"reasons\": \"The `finally` block clears the timer and removes the abort listener on success, on rejection and on a synchronous throw from `run()`. The timeout callback removes the listener itself before rejecting with `TimeoutError`, and `finally` clears the timer again. An abort during the call clears the timer and lifts the deadline, and the race then waits on `run()` alone. An already-aborted signal returns `run()` straight away without starting a timer or adding a listener. The race still rejects with `TimeoutError`, and `run()`'s result or rejection passes through unwrapped. The signature is unchanged. Only `src/promise/withTimeout.ts` is edited. Its `timeout` import is swapped for `TimeoutError`, which the new inline deadline needs. I did not run the tests, and I assumed `new TimeoutError()` gives the default message.\"}"
+}

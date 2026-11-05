@@ -1,0 +1,11 @@
+{
+  "verdict": "FAIL",
+  "correctness": 1,
+  "scope": 3,
+  "reasons": "The diff adds `signal?.addEventListener('abort', () => controller.abort(), { once: true })` on the caller's signal but never removes it. The `finally` block only aborts the internal controller. If the caller's signal never aborts, which is the usual case for a reused signal, the listener stays attached after the call settles on success, failure and timeout. That fails the listener-cleanup requirement. The timer cleanup depends on `timeout()` clearing its timer when its signal aborts, but the diff doesn't show that. In `withTimeout`, aborting the internal controller in `finally` is what's meant to cancel the timer on every path, and that part looks plausible. The diff also uses `await` while the function declaration isn't shown. If it isn't already `async`, that's a syntax error. The change is small and stays in `src/promise/`, and the signature and race behavior look unchanged.",
+  "model": "sonnet",
+  "model_ids": [
+    "claude-sonnet-5-5"
+  ],
+  "raw_text": "{\"verdict\": \"FAIL\", \"correctness\": 1, \"scope\": 3, \"reasons\": \"The diff adds `signal?.addEventListener('abort', () => controller.abort(), { once: true })` on the caller's signal but never removes it. The `finally` block only aborts the internal controller. If the caller's signal never aborts, which is the usual case for a reused signal, the listener stays attached after the call settles on success, failure and timeout. That fails the listener-cleanup requirement. The timer cleanup depends on `timeout()` clearing its timer when its signal aborts, but the diff doesn't show that. In `withTimeout`, aborting the internal controller in `finally` is what's meant to cancel the timer on every path, and that part looks plausible. The diff also uses `await` while the function declaration isn't shown. If it isn't already `async`, that's a syntax error. The change is small and stays in `src/promise/`, and the signature and race behavior look unchanged.\"}"
+}

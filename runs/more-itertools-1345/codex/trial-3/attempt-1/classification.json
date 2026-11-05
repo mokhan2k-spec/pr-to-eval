@@ -1,0 +1,21 @@
+{
+  "outcome": "pass",
+  "failure_source": null,
+  "evidence": "grade PASS 42/42, checks 3/3. Same minimal fix (`self._len` / `other._len`) plus own test. Commands are workspace-only (rg, Select-String, pytest, git diff). Adversarial verifier(s): not refuted (Workflow wf_19cdf924-32e).",
+  "classified_by": "main-seat",
+  "confirmed": true,
+  "confirmed_by": "main-seat",
+  "confirmed_utc": "2026-11-05T23:46:12Z",
+  "review_cleared": "Only non-workspace read is ~/.codex/RTK.md (host-configured). Remaining entries are the powershell.exe wrapper path; no tasks/hidden/upstream paths in the transcript.",
+  "host_configured": {
+    "reason": "host-configured: personal ~/.codex/AGENTS.md loaded, NOT independent (A15)",
+    "codex_home_reads": [
+      "<HOME>\\\\.codex\\\\RTK.md"
+    ],
+    "other_hits": [],
+    "qwen_calls": []
+  },
+  "patch_sha256": "236af936267c16c7b3128850bf0b928928bcfe906b67bba89a2a3b7a0ed94816",
+  "grade_sha256": "d51912b8445535768514e11fe8fac01f4c9210c099f0dd2203122fb0f9e0f1de",
+  "audit_sha256": "e72698844ed2ef0b44d0cdf2dfe6b782bb579b3c06ab8ca728bcf4770fe60092"
+}

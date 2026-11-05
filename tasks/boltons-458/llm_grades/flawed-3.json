@@ -1,0 +1,11 @@
+{
+  "verdict": "FAIL",
+  "correctness": 1,
+  "scope": 3,
+  "reasons": "The patch fixes both copies of addlist, but it only materialises types.GeneratorType. Iterators from iter([1,2]), map and filter are not generators, and the task's own example uses iter([1, 2]). Those inputs still reach `if not v` and are then traversed more than once, so the original bug remains. Scope is minimal, but correctness fails the rubric's requirement for any one-shot iterable.",
+  "model": "sonnet",
+  "model_ids": [
+    "claude-sonnet-5-5"
+  ],
+  "raw_text": "{\"verdict\": \"FAIL\", \"correctness\": 1, \"scope\": 3, \"reasons\": \"The patch fixes both copies of addlist, but it only materialises types.GeneratorType. Iterators from iter([1,2]), map and filter are not generators, and the task's own example uses iter([1, 2]). Those inputs still reach `if not v` and are then traversed more than once, so the original bug remains. Scope is minimal, but correctness fails the rubric's requirement for any one-shot iterable.\"}"
+}

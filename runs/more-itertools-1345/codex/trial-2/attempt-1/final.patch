@@ -1,0 +1,58 @@
+diff --git a/more_itertools/more.py b/more_itertools/more.py
+index 7218029..91d546e 100644
+--- a/more_itertools/more.py
++++ b/more_itertools/more.py
+@@ -2376,8 +2376,8 @@ class numeric_range(Sequence):
+         if self is other:
+             return True
+ 
+-        len_self = len(self)
+-        if len_self != len(other):
++        len_self = self._len
++        if len_self != other._len:
+             return False
+ 
+         if not len_self:
+@@ -2411,7 +2411,7 @@ class numeric_range(Sequence):
+         # numeric_range hashing is intended to mirror the built-in range object's
+         # hashing.
+         # https://github.com/python/cpython/blob/f5c4880151b609e0a0a0b05c292d36b18038c061/Objects/rangeobject.c#L570
+-        len_self = len(self)
++        len_self = self._len
+         if not len_self:
+             return hash((len_self, None, None))
+         if len_self == 1:
+diff --git a/tests/test_more.py b/tests/test_more.py
+index 45ceaeb..10a202a 100644
+--- a/tests/test_more.py
++++ b/tests/test_more.py
+@@ -2935,6 +2935,29 @@ class NumericRangeTests(TestCase):
+                 self.assertNotIn(v, r)
+                 self.assertRaises(ValueError, r.index, v)
+ 
++    def test_long_ranges(self):
++        stop = 10**30
++        for args1, args2 in [
++            ((0, stop), (0, stop, 1)),
++            ((0, stop, 2), (0, stop - 1, 2)),
++            ((0, -stop, -2), (0, -stop + 1, -2)),
++        ]:
++            with self.subTest(args1=args1, args2=args2):
++                range1 = mi.numeric_range(*args1)
++                range2 = mi.numeric_range(*args2)
++                self.assertEqual(range1, range2)
++                self.assertFalse(range1 != range2)
++                self.assertEqual(hash(range1), hash(range2))
++                self.assertEqual(hash(range(*args1)), hash(range1))
++                self.assertEqual({range1: 1}[range2], 1)
++                self.assertEqual(len({range1, range2}), 1)
++                self.assertRaises(OverflowError, len, range1)
++
++        for args in [(0, stop - 1), (1, stop + 1), (0, stop, 2)]:
++            self.assertNotEqual(
++                mi.numeric_range(0, stop), mi.numeric_range(*args)
++            )
++
+     def test_eq(self):
+         # numeric_range objects are equal to themselves
+         range_1 = mi.numeric_range(2, 4, 1)

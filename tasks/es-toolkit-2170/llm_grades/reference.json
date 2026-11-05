@@ -1,0 +1,11 @@
+{
+  "verdict": "PASS",
+  "correctness": 3,
+  "scope": 3,
+  "reasons": "The diff wraps the race in try/finally, so `controller.abort()` runs on success, on rejection and on timeout. That abort cancels the inner `timeout()`'s signal, which should clear the timer, and it detaches the forwarding listener. The listener is added with `{ once: true, signal: controller.signal }`, so aborting the controller also removes it from the caller's signal. An already-aborted signal is forwarded to the controller up front, so the existing 'lifts the limit' behaviour is kept. `Promise.race` is still used, so `TimeoutError` and the result or rejection of `run()` pass through unchanged. The signature is untouched and only `withTimeout.ts` changes. Two things are not visible in the diff. One is that the function must already be `async` for the new `await` to compile. The other is that `timeout()` must clear its timer when its signal aborts. I assumed both.",
+  "model": "sonnet",
+  "model_ids": [
+    "claude-sonnet-5-5"
+  ],
+  "raw_text": "{\"verdict\": \"PASS\", \"correctness\": 3, \"scope\": 3, \"reasons\": \"The diff wraps the race in try/finally, so `controller.abort()` runs on success, on rejection and on timeout. That abort cancels the inner `timeout()`'s signal, which should clear the timer, and it detaches the forwarding listener. The listener is added with `{ once: true, signal: controller.signal }`, so aborting the controller also removes it from the caller's signal. An already-aborted signal is forwarded to the controller up front, so the existing 'lifts the limit' behaviour is kept. `Promise.race` is still used, so `TimeoutError` and the result or rejection of `run()` pass through unchanged. The signature is untouched and only `withTimeout.ts` changes. Two things are not visible in the diff. One is that the function must already be `async` for the new `await` to compile. The other is that `timeout()` must clear its timer when its signal aborts. I assumed both.\"}"
+}

@@ -1,0 +1,57 @@
+diff --git a/more_itertools/more.py b/more_itertools/more.py
+index 7218029..91d546e 100644
+--- a/more_itertools/more.py
++++ b/more_itertools/more.py
+@@ -2376,8 +2376,8 @@ class numeric_range(Sequence):
+         if self is other:
+             return True
+ 
+-        len_self = len(self)
+-        if len_self != len(other):
++        len_self = self._len
++        if len_self != other._len:
+             return False
+ 
+         if not len_self:
+@@ -2411,7 +2411,7 @@ class numeric_range(Sequence):
+         # numeric_range hashing is intended to mirror the built-in range object's
+         # hashing.
+         # https://github.com/python/cpython/blob/f5c4880151b609e0a0a0b05c292d36b18038c061/Objects/rangeobject.c#L570
+-        len_self = len(self)
++        len_self = self._len
+         if not len_self:
+             return hash((len_self, None, None))
+         if len_self == 1:
+diff --git a/tests/test_more.py b/tests/test_more.py
+index 45ceaeb..0eb2cdf 100644
+--- a/tests/test_more.py
++++ b/tests/test_more.py
+@@ -2935,6 +2935,28 @@ class NumericRangeTests(TestCase):
+                 self.assertNotIn(v, r)
+                 self.assertRaises(ValueError, r.index, v)
+ 
++    def test_oversized_ranges(self):
++        size = 10**30
++        for args, equal_args, unequal_args in [
++            ((0, size), (0, size, 1), (0, size + 1)),
++            ((0, size, 2), (0, size - 1, 2), (0, size, 3)),
++            ((0, -size, -2), (0, -size + 1, -2), (0, -size, -3)),
++            ((0, size), (0, size, 1), (1, size + 1)),
++        ]:
++            with self.subTest(args=args, unequal_args=unequal_args):
++                r = mi.numeric_range(*args)
++                equal = mi.numeric_range(*equal_args)
++                unequal = mi.numeric_range(*unequal_args)
++                self.assertTrue(r == equal)
++                self.assertFalse(r != equal)
++                self.assertFalse(r == unequal)
++                self.assertTrue(r != unequal)
++                self.assertEqual(hash(r), hash(equal))
++                self.assertEqual(hash(r), hash(range(*args)))
++                self.assertEqual({r: 'value'}[equal], 'value')
++                self.assertEqual(len({r, equal}), 1)
++                self.assertRaises(OverflowError, len, r)
++
+     def test_eq(self):
+         # numeric_range objects are equal to themselves
+         range_1 = mi.numeric_range(2, 4, 1)

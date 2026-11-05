@@ -1,0 +1,69 @@
+diff --git a/more_itertools/more.py b/more_itertools/more.py
+index 7218029..91d546e 100644
+--- a/more_itertools/more.py
++++ b/more_itertools/more.py
+@@ -2376,8 +2376,8 @@ class numeric_range(Sequence):
+         if self is other:
+             return True
+ 
+-        len_self = len(self)
+-        if len_self != len(other):
++        len_self = self._len
++        if len_self != other._len:
+             return False
+ 
+         if not len_self:
+@@ -2411,7 +2411,7 @@ class numeric_range(Sequence):
+         # numeric_range hashing is intended to mirror the built-in range object's
+         # hashing.
+         # https://github.com/python/cpython/blob/f5c4880151b609e0a0a0b05c292d36b18038c061/Objects/rangeobject.c#L570
+-        len_self = len(self)
++        len_self = self._len
+         if not len_self:
+             return hash((len_self, None, None))
+         if len_self == 1:
+diff --git a/tests/test_more.py b/tests/test_more.py
+index 45ceaeb..f36d1e5 100644
+--- a/tests/test_more.py
++++ b/tests/test_more.py
+@@ -2750,6 +2750,40 @@ class GroupByTransformTests(TestCase):
+ 
+ 
+ class NumericRangeTests(TestCase):
++    def test_large_range_equality(self):
++        stop = 10**30
++        for args, other_args in [
++            ((0, stop, 2), (0, stop - 1, 2)),
++            ((0, -stop, -2), (0, -stop + 1, -2)),
++            ((0, stop), (0, stop - 1)),
++            ((0, stop, 2), (1, stop, 2)),
++            ((0, stop, 2), (0, 2 * stop, 4)),
++        ]:
++            with self.subTest(args=args, other_args=other_args):
++                a = mi.numeric_range(*args)
++                b = mi.numeric_range(*other_args)
++                expected = range(*args) == range(*other_args)
++                self.assertEqual(a == b, expected)
++                self.assertEqual(a != b, not expected)
++                self.assertEqual(b == a, expected)
++
++    def test_large_range_hash(self):
++        stop = 10**30
++        for args, other_args in [
++            ((0, stop), (0, stop)),
++            ((0, stop, 2), (0, stop - 1, 2)),
++            ((0, -stop, -2), (0, -stop + 1, -2)),
++        ]:
++            with self.subTest(args=args):
++                a = mi.numeric_range(*args)
++                b = mi.numeric_range(*other_args)
++                self.assertEqual(hash(a), hash(range(*args)))
++                self.assertEqual(hash(a), hash(b))
++                self.assertEqual({a: 'value'}[b], 'value')
++                self.assertEqual(len({a, b}), 1)
++                with self.assertRaises(OverflowError):
++                    len(a)
++
+     def test_basic(self):
+         for args, expected in [
+             ((4,), [0, 1, 2, 3]),

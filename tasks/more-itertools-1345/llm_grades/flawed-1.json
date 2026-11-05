@@ -1,0 +1,11 @@
+{
+  "verdict": "FAIL",
+  "correctness": 0,
+  "scope": 3,
+  "reasons": "On OverflowError, __eq__ returns False, so equal huge ranges (for example numeric_range(0, 10**30) with itself, or with different stop arguments) compare unequal, which is wrong. The hash for huge ranges is the constant-ish hash((start, step)). It ignores the length, so equal ranges with different starts or steps can hash differently, and it doesn't match the built-in range scheme.",
+  "model": "sonnet",
+  "model_ids": [
+    "claude-sonnet-5-5"
+  ],
+  "raw_text": "{\"verdict\": \"FAIL\", \"correctness\": 0, \"scope\": 3, \"reasons\": \"On OverflowError, __eq__ returns False, so equal huge ranges (for example numeric_range(0, 10**30) with itself, or with different stop arguments) compare unequal, which is wrong. The hash for huge ranges is the constant-ish hash((start, step)). It ignores the length, so equal ranges with different starts or steps can hash differently, and it doesn't match the built-in range scheme.\"}"
+}

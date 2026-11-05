@@ -1,0 +1,30 @@
+{
+  "outcome": "pass",
+  "failure_source": null,
+  "evidence": "grade PASS 42/42, checks 3/3. Patch: `len_self = self._len` / `other._len` in __eq__ and __hash__, plus own test. Commands are workspace-only (rg, Select-String, pytest) plus `qwen read`/`qwen squash` on workspace files. Adversarial verifier(s): not refuted (Workflow wf_19cdf924-32e).",
+  "classified_by": "main-seat",
+  "confirmed": true,
+  "confirmed_by": "main-seat",
+  "confirmed_utc": "2026-11-05T23:46:11Z",
+  "review_cleared": "Only non-workspace read is ~/.codex/RTK.md (host-configured). Other hits are powershell.exe invocation paths. qwen calls only touch more_itertools/more.py and tests/test_more.py.",
+  "host_configured": {
+    "reason": "host-configured: personal ~/.codex/AGENTS.md loaded, NOT independent (A15)",
+    "codex_home_reads": [
+      "<HOME>\\\\.codex\\\\RTK.md"
+    ],
+    "other_hits": [],
+    "qwen_calls": [
+      {
+        "where": "line 10 command_execution.command:1",
+        "mode": "read"
+      },
+      {
+        "where": "line 17 command_execution.command:1",
+        "mode": "squash"
+      }
+    ]
+  },
+  "patch_sha256": "ab8cdf22c5db238e6849a4cb69de0bc13b4bd0ee09ed866c3851ef8e7df522fa",
+  "grade_sha256": "b9210906a601dce37748d06e913cf1995c259977c9f68ee6d7786ab340234230",
+  "audit_sha256": "bd664934ddfe13d0c88d1837a89160ae954302b5983dde37bc2f9f6061bf0adf"
+}

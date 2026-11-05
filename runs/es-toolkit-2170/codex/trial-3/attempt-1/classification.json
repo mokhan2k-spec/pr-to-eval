@@ -1,0 +1,21 @@
+{
+  "outcome": "pass",
+  "failure_source": null,
+  "evidence": "grade.json: PASS, 17/17 tests, 3/3 checks. Commands: Get-Content TASK.md, src/promise/withTimeout.ts, timeout.ts, TimeoutError.ts; vitest runs of src/promise (exit 0). Only external read: Get-Content '<HOME>\\.codex\\RTK.md'. Adversarial verifier(s): not refuted (Workflow wf_19cdf924-32e).",
+  "classified_by": "main-seat",
+  "confirmed": true,
+  "confirmed_by": "main-seat",
+  "confirmed_utc": "2026-11-05T23:46:11Z",
+  "review_cleared": "All absolute-path entries are the powershell.exe invocation wrapper; the parent-path entry is a '../error/TimeoutError.ts' import in the patch. Nothing outside the workspace read besides ~/.codex/RTK.md.",
+  "host_configured": {
+    "reason": "host-configured: personal ~/.codex/AGENTS.md loaded, NOT independent (A15)",
+    "codex_home_reads": [
+      "<HOME>\\\\.codex\\\\RTK.md"
+    ],
+    "other_hits": [],
+    "qwen_calls": []
+  },
+  "patch_sha256": "b6365a2f33076c6915b3971a6389d1f1ca1e0ba816ef3ebc6920cbb94850909d",
+  "grade_sha256": "5595ad29afcded5be1068894e72b002092e40e2f0893fc3723b1b9e41619a2c1",
+  "audit_sha256": "0738d111c8f3fe1df0debf0bdc2c6299e9dece9d486e281852cbd422cc96309d"
+}

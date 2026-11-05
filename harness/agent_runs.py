@@ -42,6 +42,13 @@ DEFAULT_TIMEOUT = 1200
 GITIGNORE = ["__pycache__/", ".pytest_cache/", "node_modules/", "node_modules", "*.pyc"]
 CODEX_LEAKS = ["~/.codex/AGENTS.md global rules still load (helper-routing rules; "
                "cannot be disabled without moving credentials)"]
+# Option C (grading decision A15): Codex runs on this host load ~/.codex/AGENTS.md, which
+# routes work to ~/.codex/RTK.md and the local `qwen` helper. Such a run can be confirmed
+# as host-configured: its verdict is kept but labelled NOT independent and kept out of
+# headline figures. Only audit hits that are reads under ~/.codex qualify; anything else
+# is still contamination (or must be a reviewed false positive).
+HOST_CONFIG_HIT_RE = re.compile(r"^<HOME>[\\/]+\.codex[\\/]+[^\\/]+$")
+QWEN_CALL_RE = re.compile(r"\bqwen\s+(read|squash|code)\b")
 CODEX_MODEL_NOTE = ("codex exec --json does not state the model it served; "
                     "observed_model is unknown, only the requested model is recorded")
 BOUNDARY_DIR = "_boundary"
@@ -766,8 +773,23 @@ def parse_trials(spec: str) -> list[int]:
     return sorted(set(out))
 
 
+def host_config_evidence(aud: dict) -> dict:
+    """What the host's Codex config did in this attempt, read from audit.json: the hits
+    that are ~/.codex reads, the hits that are not, and every `qwen` helper call."""
+    hits = aud.get("hits") or []
+    reads = [h["text"] for h in hits if h.get("kind") == "path" and HOST_CONFIG_HIT_RE.match(h["text"])]
+    other = [h["text"] for h in hits if h["text"] not in reads]
+    qwen = []
+    for r in aud.get("review_required") or []:
+        m = QWEN_CALL_RE.search(r.get("text", ""))
+        if m:
+            qwen.append({"where": r["where"], "mode": m.group(1)})
+    return {"codex_home_reads": sorted(set(reads)), "other_hits": other, "qwen_calls": qwen}
+
+
 def confirm_attempt(attempt_dir: Path, source: str, evidence: str,
-                    audit_false_positive: bool = False, review_cleared: str | None = None) -> dict:
+                    audit_false_positive: bool = False, review_cleared: str | None = None,
+                    host_configured: str | None = None) -> dict:
     """Record the main seat's classification. `source` is agent / environment / grader /
     contaminated, or `pass` to confirm a PASS verdict. If the audit has review_required
     entries (host-access patterns), `review_cleared` must say why they are acceptable."""
@@ -786,6 +808,23 @@ def confirm_attempt(attempt_dir: Path, source: str, evidence: str,
         raise ValueError(f"audit.json has {len(review)} review_required host-access pattern(s) "
                          f"(first: {review[0]['where']}: {review[0]['text']}); "
                          "pass --review-cleared '<why they are acceptable>'")
+    host = None
+    if host_configured is not None:
+        if not host_configured.strip():
+            raise ValueError("--host-configured needs a reason")
+        if meta.get("agent") != "codex":
+            raise ValueError("--host-configured applies to codex attempts only")
+        if source == "contaminated":
+            raise ValueError("--host-configured keeps the verdict; it cannot be combined with "
+                             "--source contaminated")
+        if aud.get("clean", True):
+            raise ValueError("audit is clean; --host-configured is not needed")
+        host = host_config_evidence(aud)
+        if not host["codex_home_reads"]:
+            raise ValueError("no ~/.codex read in the audit hits; this is not the host-config leak")
+        if host["other_hits"] and not audit_false_positive:
+            raise ValueError(f"audit hits outside ~/.codex: {host['other_hits'][:3]}; they are "
+                             "contamination unless reviewed with --audit-false-positive")
     verdict = grade["verdict"]
     if source == "contaminated":
         outcome, fsrc = "contaminated", None
@@ -804,6 +843,8 @@ def confirm_attempt(attempt_dir: Path, source: str, evidence: str,
         cls["audit_override"] = True
     if review:
         cls["review_cleared"] = review_cleared.strip()
+    if host is not None:
+        cls["host_configured"] = {"reason": host_configured.strip(), **host}
     patch_sha = sha256_file(attempt_dir / "final.patch")
     cls = bind_classification(cls, patch_sha, attempt_dir / "grade.json", attempt_dir / "audit.json")
     write_json(attempt_dir / "classification.json", cls)
@@ -977,7 +1018,8 @@ def cmd_confirm(args) -> int:
         if not args.source:
             raise ValueError("--source is required (unless --interrupted)")
         cls = confirm_attempt(Path(args.attempt_dir), args.source, args.evidence,
-                              args.audit_false_positive, args.review_cleared)
+                              args.audit_false_positive, args.review_cleared,
+                              args.host_configured)
     except ValueError as e:
         print(f"error: {e}", file=sys.stderr)
         return 1
@@ -1060,6 +1102,9 @@ def main(argv=None) -> int:
                         help="the audit hits were reviewed and are not contamination")
         ap.add_argument("--review-cleared", help="why the audit's review_required host-access "
                         "patterns are acceptable (required when there are any)")
+        ap.add_argument("--host-configured", metavar="WHY",
+                        help="codex only: keep the verdict but label it host-configured (the "
+                        "audit's only real hits are ~/.codex reads); NOT independent")
         return cmd_confirm(ap.parse_args(argv[1:]))
     if argv and argv[0] == "regrade":
         ap = argparse.ArgumentParser(prog="harness.agent_runs regrade")

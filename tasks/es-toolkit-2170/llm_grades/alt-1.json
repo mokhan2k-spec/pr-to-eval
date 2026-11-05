@@ -1,0 +1,11 @@
+{
+  "verdict": "PASS",
+  "correctness": 3,
+  "scope": 3,
+  "reasons": "The diff wraps the race in try/finally. The finally block aborts an internal controller and calls removeEventListener on the caller's signal. That covers success, failure and timeout. Aborting the internal controller should make `timeout()` clear its own timer, because aborting a signal already lifts the time limit under the existing semantics. This relies on `timeout()` clearing its timer on abort, which the diff doesn't show. The caller's abort listener is removed in every path. An already-aborted signal is forwarded by aborting the controller up front, so `timeout` sees the same aborted state as before and the call behaves as it did. The `Promise.race` with `timeout` is kept, so `TimeoutError` still comes from `timeout`. `await` passes through the result and rejection reason of `run()` unchanged. The signature is unchanged and only `src/promise/withTimeout.ts` is edited.",
+  "model": "sonnet",
+  "model_ids": [
+    "claude-sonnet-5-5"
+  ],
+  "raw_text": "{\"verdict\": \"PASS\", \"correctness\": 3, \"scope\": 3, \"reasons\": \"The diff wraps the race in try/finally. The finally block aborts an internal controller and calls removeEventListener on the caller's signal. That covers success, failure and timeout. Aborting the internal controller should make `timeout()` clear its own timer, because aborting a signal already lifts the time limit under the existing semantics. This relies on `timeout()` clearing its timer on abort, which the diff doesn't show. The caller's abort listener is removed in every path. An already-aborted signal is forwarded by aborting the controller up front, so `timeout` sees the same aborted state as before and the call behaves as it did. The `Promise.race` with `timeout` is kept, so `TimeoutError` still comes from `timeout`. `await` passes through the result and rejection reason of `run()` unchanged. The signature is unchanged and only `src/promise/withTimeout.ts` is edited.\"}"
+}

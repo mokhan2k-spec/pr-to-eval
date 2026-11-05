@@ -1,0 +1,35 @@
+{
+  "outcome": "pass",
+  "failure_source": null,
+  "evidence": "grade.json PASS, 212/212 tests, 3/3 checks. Same minimal `v = list(v)` fix in both files; own parametrized test. No transcript access to hidden tests found. Adversarial verifier(s): not refuted (Workflow wf_19cdf924-32e).",
+  "classified_by": "main-seat",
+  "confirmed": true,
+  "confirmed_by": "main-seat",
+  "confirmed_utc": "2026-11-05T23:46:10Z",
+  "audit_override": true,
+  "review_cleared": "Review entries are powershell.exe wrapper paths; only external read is ~/.codex/RTK.md. No reads of hidden/tasks/runs paths in transcript.",
+  "host_configured": {
+    "reason": "host-configured: personal ~/.codex/AGENTS.md loaded, NOT independent (A15)",
+    "codex_home_reads": [
+      "<HOME>\\\\.codex\\\\RTK.md"
+    ],
+    "other_hits": [
+      "hidden-test identifier 'urlutils.QueryParamDict'",
+      "hidden-test identifier 'urlutils.QueryParamDict'",
+      "hidden-test identifier 'urlutils.QueryParamDict'"
+    ],
+    "qwen_calls": [
+      {
+        "where": "line 11 command_execution.command:1",
+        "mode": "code"
+      },
+      {
+        "where": "line 21 command_execution.command:1",
+        "mode": "squash"
+      }
+    ]
+  },
+  "patch_sha256": "00c91ff3bd467a8bf1d9fb0ecf53f1966f05413c3087411dfec923fd99b40b4b",
+  "grade_sha256": "e11e3bb2298a1e8bb35d0d12348884416862cb80897495ee4a97b9c56f80a5e0",
+  "audit_sha256": "34180e413d2e8fb43a26a4fc7df5812ee97fa2be829ed43fcfb35937eb8b52ac"
+}

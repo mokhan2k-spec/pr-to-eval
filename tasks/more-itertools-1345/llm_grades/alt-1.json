@@ -1,0 +1,11 @@
+{
+  "verdict": "PASS",
+  "correctness": 3,
+  "scope": 3,
+  "reasons": "The diff swaps `len()` for the stored integer `self._len` in `__eq__` and `__hash__`. Comparison and hashing therefore work for lengths above `sys.maxsize`, and the existing range-mirroring hash scheme is untouched. `__len__` still raises `OverflowError` for such ranges, and nothing public changes. I did not run the code or open the repo; I'm relying on `_len` being a plain int attribute, as I remember it being in more-itertools.",
+  "model": "sonnet",
+  "model_ids": [
+    "claude-sonnet-5-5"
+  ],
+  "raw_text": "{\"verdict\": \"PASS\", \"correctness\": 3, \"scope\": 3, \"reasons\": \"The diff swaps `len()` for the stored integer `self._len` in `__eq__` and `__hash__`. Comparison and hashing therefore work for lengths above `sys.maxsize`, and the existing range-mirroring hash scheme is untouched. `__len__` still raises `OverflowError` for such ranges, and nothing public changes. I did not run the code or open the repo; I'm relying on `_len` being a plain int attribute, as I remember it being in more-itertools.\"}"
+}

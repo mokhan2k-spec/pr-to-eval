@@ -1,0 +1,95 @@
+diff --git a/boltons/dictutils.py b/boltons/dictutils.py
+index 12c58de..a181a3a 100644
+--- a/boltons/dictutils.py
++++ b/boltons/dictutils.py
+@@ -225,6 +225,7 @@ class OrderedMultiDict(dict):
+         Called ``addlist`` for consistency with :meth:`getlist`, but
+         tuples and other sequences and iterables work.
+         """
++        v = list(v)
+         if not v:
+             return
+         self_insert = self._insert
+diff --git a/boltons/urlutils.py b/boltons/urlutils.py
+index 712e5a1..ba84598 100644
+--- a/boltons/urlutils.py
++++ b/boltons/urlutils.py
+@@ -1123,6 +1123,7 @@ class OrderedMultiDict(dict):
+         Called ``addlist`` for consistency with :meth:`getlist`, but
+         tuples and other sequences and iterables work.
+         """
++        v = list(v)
+         if not v:
+             return
+         self_insert = self._insert
+diff --git a/tests/test_dictutils.py b/tests/test_dictutils.py
+index c82a4a2..00f632e 100644
+--- a/tests/test_dictutils.py
++++ b/tests/test_dictutils.py
+@@ -1,7 +1,9 @@
+ import sys
++import runpy
+ import pytest
+ 
+ from boltons.dictutils import OMD, OneToOne, ManyToMany, FrozenDict, subdict, FrozenHashError
++from boltons import urlutils
+ 
+ 
+ _ITEMSETS = [[],
+@@ -270,6 +272,37 @@ def test_addlist():
+     assert len(list(e_omd.iteritems(multi=True))) == 0
+ 
+ 
++@pytest.mark.parametrize('omd_type', [
++    OMD,
++    urlutils.QueryParamDict,
++    runpy.run_path(urlutils.__file__)['OrderedMultiDict'],
++], ids=['dictutils', 'query_params', 'standalone_urlutils'])
++@pytest.mark.parametrize('iterable_type', [list, tuple, lambda v: v, iter,
++                                         lambda v: (x for x in v)],
++                         ids=['list', 'tuple', 'range', 'iterator', 'generator'])
++def test_addlist_iterables(omd_type, iterable_type):
++    omd = omd_type()
++    omd.add('a', -1)
++    omd.addlist('a', [0])
++    omd.add('b', 9)
++    omd.addlist('a', iterable_type(range(1, 3)))
++
++    assert omd.getlist('a') == [-1, 0, 1, 2]
++    assert omd.get('a') == omd['a'] == 2
++    assert omd.items(multi=True) == [('a', -1), ('a', 0), ('b', 9),
++                                     ('a', 1), ('a', 2)]
++    assert omd.values(multi=True) == [-1, 0, 9, 1, 2]
++    assert omd.poplast('a') == 2
++    assert omd.getlist('a') == [-1, 0, 1]
++
++    before = omd.items(multi=True)
++    omd.addlist('a', iterable_type(range(0)))
++    omd.addlist('missing', iterable_type(range(0)))
++    assert 'missing' not in omd
++    assert omd.items(multi=True) == before
++    assert omd.getlist('a') == [-1, 0, 1]
++
++
+ def test_pop_all():
+     omd = OMD()
+     omd.add('even', 0)
+diff --git a/tests/test_urlutils.py b/tests/test_urlutils.py
+index 8cac423..85de1db 100644
+--- a/tests/test_urlutils.py
++++ b/tests/test_urlutils.py
+@@ -60,6 +60,14 @@ def test_roundtrip(test_url):
+     assert test_url == result
+ 
+ 
++def test_query_params_addlist_iterator():
++    url = URL('https://example.com/?a=first')
++    url.query_params.addlist('a', (v for v in ['second', 'third']))
++    url.query_params.addlist('missing', iter([]))
++    assert url.query_params.getlist('a') == ['first', 'second', 'third']
++    assert url.to_text() == 'https://example.com/?a=first&a=second&a=third'
++
++
+ def test_basic():
+     u1 = URL('http://googlewebsite.com/e-shops.aspx')
+     assert isinstance(u1.to_text(), str)

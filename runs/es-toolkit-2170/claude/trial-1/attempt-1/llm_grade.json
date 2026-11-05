@@ -1,0 +1,15 @@
+{
+  "status": "graded",
+  "verdict": "PASS",
+  "correctness": 3,
+  "scope": 3,
+  "reasons": "I could not find the `timeout` source in the working directory, so this rests on the diff's own comment that aborting clears the timer. If that is wrong, point 1 fails. The diff gives `timeout` an internal `AbortController` signal. In `finally`, on success, failure and timeout alike, it calls `controller.abort()`, which clears the timer, and removes its own `onAbort` listener from the caller's signal. An already-aborted signal is handled by aborting the controller up front and attaching no listener. Aborting the caller's signal still forwards to the controller, so the time limit is lifted exactly as before. The race against `timeout` is kept, so `TimeoutError` still happens. `await` passes the result and the rejection reason through unchanged. The signature is unchanged and only `src/promise/withTimeout.ts` is touched, with a small diff.",
+  "model": "sonnet",
+  "model_ids": [
+    "claude-sonnet-5-5"
+  ],
+  "raw_text": "{\"verdict\":\"PASS\",\"correctness\":3,\"scope\":3,\"reasons\":\"I could not find the `timeout` source in the working directory, so this rests on the diff's own comment that aborting clears the timer. If that is wrong, point 1 fails. The diff gives `timeout` an internal `AbortController` signal. In `finally`, on success, failure and timeout alike, it calls `controller.abort()`, which clears the timer, and removes its own `onAbort` listener from the caller's signal. An already-aborted signal is handled by aborting the controller up front and attaching no listener. Aborting the caller's signal still forwards to the controller, so the time limit is lifted exactly as before. The race against `timeout` is kept, so `TimeoutError` still happens. `await` passes the result and the rejection reason through unchanged. The signature is unchanged and only `src/promise/withTimeout.ts` is touched, with a small diff.\"}",
+  "patch_sha256": "387d62752f1042c71a394aa1ec295ed68693b5f6c732ff165a2a21969de5342e",
+  "task_hash": "11c36ed2f4e6538d9199ff27e42b6f067c4765e4238c3e086813d5f7e2aa4c69",
+  "grader_prompt_sha256": "29e0697eaacc8d6a06cd66d7d063dd8683c23acd56a4dd046777536af34a1859"
+}

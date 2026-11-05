@@ -1,0 +1,111 @@
+diff --git a/src/promise/withTimeout.spec.ts b/src/promise/withTimeout.spec.ts
+index c85448f..943e326 100644
+--- a/src/promise/withTimeout.spec.ts
++++ b/src/promise/withTimeout.spec.ts
+@@ -1,8 +1,80 @@
+-import { describe, expect, it } from 'vitest';
++import { afterEach, describe, expect, it, vi } from 'vitest';
++import { TimeoutError } from '../error/TimeoutError.ts';
+ import { delay } from './delay.ts';
+ import { withTimeout } from './withTimeout.ts';
+ 
+ describe('withTimeout', () => {
++  afterEach(() => {
++    vi.useRealTimers();
++    vi.restoreAllMocks();
++  });
++
++  it.each(['resolve', 'reject', 'timeout', 'throw'] as const)(
++    'cleans up its timer and abort listener when run ends with %s',
++    async outcome => {
++      vi.useFakeTimers();
++      const controller = new AbortController();
++      const addListener = vi.spyOn(controller.signal, 'addEventListener');
++      const removeListener = vi.spyOn(controller.signal, 'removeEventListener');
++      const value = {};
++      const reason = {};
++      const result = withTimeout(
++        () => {
++          if (outcome === 'throw') {
++            throw reason;
++          }
++          if (outcome === 'reject') {
++            return Promise.reject(reason);
++          }
++          return outcome === 'resolve' ? Promise.resolve(value) : new Promise<never>(() => {});
++        },
++        100,
++        { signal: controller.signal }
++      );
++
++      if (outcome === 'timeout') {
++        const assertion = expect(result).rejects.toBeInstanceOf(TimeoutError);
++        await vi.advanceTimersByTimeAsync(100);
++        await assertion;
++        await expect(result).rejects.toThrow('The operation was timed out');
++      } else if (outcome === 'resolve') {
++        await expect(result).resolves.toBe(value);
++      } else {
++        await expect(result).rejects.toBe(reason);
++      }
++
++      expect(vi.getTimerCount()).toBe(0);
++      expect(addListener).toHaveBeenCalledTimes(1);
++      expect(removeListener).toHaveBeenCalledWith('abort', addListener.mock.calls[0][1]);
++    }
++  );
++
++  it('clears the timer after success without a caller signal', async () => {
++    vi.useFakeTimers();
++    await expect(withTimeout(() => Promise.resolve('foo'), 100)).resolves.toBe('foo');
++    expect(vi.getTimerCount()).toBe(0);
++  });
++
++  it.each([false, true])('awaits run without a deadline when aborted (already aborted: %s)', async alreadyAborted => {
++    vi.useFakeTimers();
++    const controller = new AbortController();
++    if (alreadyAborted) {
++      controller.abort();
++    }
++    let resolve!: (value: string) => void;
++    const operation = new Promise<string>(done => {
++      resolve = done;
++    });
++    const result = withTimeout(() => operation, 100, { signal: controller.signal });
++
++    controller.abort();
++    expect(vi.getTimerCount()).toBe(0);
++    await vi.advanceTimersByTimeAsync(200);
++    resolve('foo');
++    await expect(result).resolves.toBe('foo');
++    expect(vi.getTimerCount()).toBe(0);
++  });
++
+   it('returns the result value if a response is received before the specified wait time', async () => {
+     const result = await withTimeout(async () => {
+       await delay(50);
+diff --git a/src/promise/withTimeout.ts b/src/promise/withTimeout.ts
+index 4e6ba6e..4f65f87 100644
+--- a/src/promise/withTimeout.ts
++++ b/src/promise/withTimeout.ts
+@@ -47,5 +47,19 @@ export async function withTimeout<T>(
+   ms: number,
+   { signal }: WithTimeoutOptions = {}
+ ): Promise<T> {
+-  return Promise.race([run(), timeout(ms, { signal })]);
++  const controller = new AbortController();
++  const abortHandler = () => controller.abort();
++
++  if (signal?.aborted) {
++    controller.abort();
++  } else {
++    signal?.addEventListener('abort', abortHandler, { once: true });
++  }
++
++  try {
++    return await Promise.race([run(), timeout(ms, { signal: controller.signal })]);
++  } finally {
++    controller.abort();
++    signal?.removeEventListener('abort', abortHandler);
++  }
+ }

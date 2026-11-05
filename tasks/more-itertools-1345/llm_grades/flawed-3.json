@@ -1,0 +1,11 @@
+{
+  "verdict": "FAIL",
+  "correctness": 1,
+  "scope": 3,
+  "reasons": "For lengths above sys.maxsize, `__eq__` compares the raw (start, stop, step) tuples. That returns False for equal-content ranges with different stops, such as `numeric_range(0, 10**30, 2)` and `numeric_range(0, 10**30-1, 2)`, which the task says must be True. The hash change (using `self._len`) is fine and the diff is minimal.",
+  "model": "sonnet",
+  "model_ids": [
+    "claude-sonnet-5-5"
+  ],
+  "raw_text": "{\"verdict\": \"FAIL\", \"correctness\": 1, \"scope\": 3, \"reasons\": \"For lengths above sys.maxsize, `__eq__` compares the raw (start, stop, step) tuples. That returns False for equal-content ranges with different stops, such as `numeric_range(0, 10**30, 2)` and `numeric_range(0, 10**30-1, 2)`, which the task says must be True. The hash change (using `self._len`) is fine and the diff is minimal.\"}"
+}

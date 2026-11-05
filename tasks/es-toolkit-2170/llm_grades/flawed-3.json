@@ -1,0 +1,11 @@
+{
+  "verdict": "FAIL",
+  "correctness": 0,
+  "scope": 3,
+  "reasons": "The patch removes the timeout. It deletes `Promise.race([run(), timeout(ms, { signal })])` and never starts a timer. The new code only creates an AbortController, attaches a listener, and does `return await run()`. `ms` is never used, so a slow `run()` no longer rejects with `TimeoutError`. This breaks the core behaviour (rubric point 3) and the 'lift the time limit on abort' semantics (point 4). Timer cleanup is trivially satisfied only because no timer exists. The diff also doesn't show the function being declared `async`, so the `await` may not compile. The change is small and confined to `src/promise/`, so scope is fine.",
+  "model": "sonnet",
+  "model_ids": [
+    "claude-sonnet-5-5"
+  ],
+  "raw_text": "{\"verdict\":\"FAIL\",\"correctness\":0,\"scope\":3,\"reasons\":\"The patch removes the timeout. It deletes `Promise.race([run(), timeout(ms, { signal })])` and never starts a timer. The new code only creates an AbortController, attaches a listener, and does `return await run()`. `ms` is never used, so a slow `run()` no longer rejects with `TimeoutError`. This breaks the core behaviour (rubric point 3) and the 'lift the time limit on abort' semantics (point 4). Timer cleanup is trivially satisfied only because no timer exists. The diff also doesn't show the function being declared `async`, so the `await` may not compile. The change is small and confined to `src/promise/`, so scope is fine.\"}"
+}

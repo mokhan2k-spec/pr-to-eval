@@ -1,0 +1,66 @@
+{
+  "clean": false,
+  "hits": [
+    {
+      "kind": "path",
+      "where": "line 4 command_execution.command",
+      "text": "<HOME>\\\\.codex\\\\RTK.md"
+    },
+    {
+      "kind": "path",
+      "where": "line 6 command_execution.command",
+      "text": "\\\\more.py"
+    },
+    {
+      "kind": "path",
+      "where": "line 8 command_execution.command",
+      "text": "\\\\more.py"
+    },
+    {
+      "kind": "path",
+      "where": "line 8 command_execution.command",
+      "text": "\\\\test_more.py"
+    },
+    {
+      "kind": "path",
+      "where": "line 10 command_execution.command",
+      "text": "\\\\test_more.py"
+    }
+  ],
+  "tool_calls": 9,
+  "review_required": [
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 4 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command \"Get-Content TASK.md; Get-Content <HOME>\\\\.codex\\\\RTK.md; rg --files -g AGENTS.md -g pyproject.toml -g setup.cfg -g tox.ini\""
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 6 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command \"Get-ChildItem -Force -Name; Select-String -Path more_itertools\\\\more.py -Pattern 'class numeric_range','def __eq__','def __ha"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 8 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command \"Get-Content more_itertools\\\\more.py | Select-Object -Skip 2275 -First 290; Select-String -Path tests\\\\test_more.py -Pattern '"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 10 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command \"Select-String -Path tests\\\\test_more.py -Pattern 'def test_equal','def test_hash','def test_len','def test_not_equal' -Contex"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 15 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command 'python -m pytest tests/test_more.py -k NumericRange'"
+    }
+  ],
+  "auditor_digest": "abfe585480a38ae6d34bc5d2e6dfbc6d613c214f83a768c23d6b72260acd470f",
+  "transcript_sha256": "aa3250ca00aefa5b25a879e9952ff16898257ce67b0c0b9a261bae0858d22241",
+  "patch_sha256": "3277715caed5b3f3ab1b8474cf4ef41b8f76c79bb210f458dd6a53179c4e45b6"
+}

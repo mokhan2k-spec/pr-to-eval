@@ -471,3 +471,59 @@ def test_final_incomplete_attempt_still_fails_even_with_a_record(world, interrup
     agent_runs.confirm_interrupted(interrupted, "grader crashed; transcript salvaged")
     shutil.rmtree(interrupted.parent / "attempt-2")
     assert any("final attempt is incomplete" in p for p in check(world))
+
+
+# --- A15: host-configured Codex trials ---------------------------------------------------
+
+def make_host_configured(w, trial=1, agent="codex", extra_hits=(), override=False):
+    d = attempt(w, agent, trial)
+    aud = json.loads((d / "audit.json").read_text(encoding="utf-8"))
+    aud.update(clean=False, hits=[{"kind": "path", "where": "w", "text": "<HOME>\\\\.codex\\\\RTK.md"},
+                                  *extra_hits],
+               review_required=[{"where": "line 8 cmd:1", "text": "qwen code --task \"draft\"",
+                                 "pattern": "absolute-path"}])
+    jw(d / "audit.json", aud)
+    cls = json.loads((d / "classification.json").read_text(encoding="utf-8"))
+    cls.update(audit_sha256=sha256_file(d / "audit.json"), review_cleared="qwen helper, A15",
+               host_configured={"reason": "A15", **agent_runs.host_config_evidence(aud)})
+    if override:
+        cls["audit_override"] = True
+    jw(d / "classification.json", cls)
+    return d, cls
+
+
+def test_host_configured_trial_passes_check_and_is_labelled(world):
+    make_host_configured(world)
+    report.write_summary(world["runs"])
+    assert check(world) == []
+    text = (world["runs"] / "SUMMARY.md").read_text(encoding="utf-8")
+    assert "| tiny-python-1 | codex (host-configured, not independent) | 4/5 |" in text
+    assert "## Host-configured trials (not independent)" in text
+    assert "| tiny-python-1/codex/trial-1 | PASS | RTK.md | code x1 |" in text
+    assert "- 8/9 independent trials passed." in text and "1 host-configured trial(s)" in text
+
+
+def test_no_host_configured_trials_says_none(world):
+    text = (world["runs"] / "SUMMARY.md").read_text(encoding="utf-8")
+    assert "- 9/10 independent trials passed." in text
+    assert "## Host-configured trials (not independent)\n\nNone." in text
+
+
+def test_host_configured_evidence_must_match_the_audit(world):
+    d, cls = make_host_configured(world)
+    cls["host_configured"]["qwen_calls"] = []
+    jw(d / "classification.json", cls)
+    assert any("does not match audit.json" in p for p in check(world))
+
+
+def test_host_configured_is_codex_only(world):
+    make_host_configured(world, agent="claude")
+    assert any("non-codex" in p for p in check(world))
+
+
+def test_host_configured_other_hits_need_override(world):
+    hit = {"kind": "path", "where": "w", "text": "<HOME>\\\\Code\\\\x"}
+    make_host_configured(world, extra_hits=(hit,))
+    assert any("outside ~/.codex" in p for p in check(world))
+    make_host_configured(world, trial=2, extra_hits=(hit,), override=True)
+    assert not any("trial-2" in p and "outside" in p for p in check(world))

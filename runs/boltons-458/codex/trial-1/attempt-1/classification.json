@@ -1,0 +1,26 @@
+{
+  "outcome": "pass",
+  "failure_source": null,
+  "evidence": "grade.json PASS, 212/212 tests, 3/3 checks. Patch adds `v = list(v)` before `if not v` in both OrderedMultiDict.addlist (dictutils.py, urlutils.py) plus own tests. Only audit path hit: <HOME>\\.codex\\RTK.md. Adversarial verifier(s): not refuted (Workflow wf_19cdf924-32e).",
+  "classified_by": "main-seat",
+  "confirmed": true,
+  "confirmed_by": "main-seat",
+  "confirmed_utc": "2026-11-05T23:46:10Z",
+  "review_cleared": "All review_required are the powershell.exe wrapper path; only non-workspace read is ~/.codex/RTK.md (host-configured). No hidden/, tasks/ or runs/ access in transcript.",
+  "host_configured": {
+    "reason": "host-configured: personal ~/.codex/AGENTS.md loaded, NOT independent (A15)",
+    "codex_home_reads": [
+      "<HOME>\\\\.codex\\\\RTK.md"
+    ],
+    "other_hits": [],
+    "qwen_calls": [
+      {
+        "where": "line 8 command_execution.command:1",
+        "mode": "read"
+      }
+    ]
+  },
+  "patch_sha256": "27c41f0a724531abb261d5c4df2f3f2f023359fd818a08217eb0c992c1461507",
+  "grade_sha256": "5c1ad42d1a705044ab096ec0d6ee3ac299f09d5591145708486da040f34dddfa",
+  "audit_sha256": "149e64eaf4163f1d58e5a926bc5d79e31d8b6336d13a18daf32d8eec0ca7a349"
+}

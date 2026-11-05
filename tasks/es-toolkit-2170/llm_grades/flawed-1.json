@@ -1,0 +1,11 @@
+{
+  "verdict": "FAIL",
+  "correctness": 1,
+  "scope": 3,
+  "reasons": "Cleanup only runs on the success path. `controller.abort()` comes after `await Promise.race(...)` with no try/finally. If `run()` rejects, or the timeout wins and rejects with `TimeoutError`, the await throws and the abort is skipped. In both cases the listener on the caller's `signal` stays attached, and the timer is not cleaned up on the rejection path. The required cleanup on every settle path (success, failure, timeout) therefore fails. The change is small and stays in `src/promise/withTimeout.ts`, and the signature is unchanged.",
+  "model": "sonnet",
+  "model_ids": [
+    "claude-sonnet-5-5"
+  ],
+  "raw_text": "{\"verdict\":\"FAIL\",\"correctness\":1,\"scope\":3,\"reasons\":\"Cleanup only runs on the success path. `controller.abort()` comes after `await Promise.race(...)` with no try/finally. If `run()` rejects, or the timeout wins and rejects with `TimeoutError`, the await throws and the abort is skipped. In both cases the listener on the caller's `signal` stays attached, and the timer is not cleaned up on the rejection path. The required cleanup on every settle path (success, failure, timeout) therefore fails. The change is small and stays in `src/promise/withTimeout.ts`, and the signature is unchanged.\"}"
+}

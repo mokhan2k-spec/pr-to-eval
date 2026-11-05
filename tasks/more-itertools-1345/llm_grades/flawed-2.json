@@ -1,0 +1,11 @@
+{
+  "verdict": "FAIL",
+  "correctness": 1,
+  "scope": 3,
+  "reasons": "The diff only switches `__eq__` to use `_len` instead of `len()`, so it fixes `==` and `!=` for long ranges. It does nothing for `hash()`, which the task says also raises `OverflowError`, so `{a: 1}[b]` stays broken and the required hashing behaviour is missing.",
+  "model": "sonnet",
+  "model_ids": [
+    "claude-sonnet-5-5"
+  ],
+  "raw_text": "{\"verdict\": \"FAIL\", \"correctness\": 1, \"scope\": 3, \"reasons\": \"The diff only switches `__eq__` to use `_len` instead of `len()`, so it fixes `==` and `!=` for long ranges. It does nothing for `hash()`, which the task says also raises `OverflowError`, so `{a: 1}[b]` stays broken and the required hashing behaviour is missing.\"}"
+}

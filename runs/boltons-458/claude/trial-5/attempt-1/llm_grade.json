@@ -1,0 +1,15 @@
+{
+  "status": "graded",
+  "verdict": "PASS",
+  "correctness": 3,
+  "scope": 3,
+  "reasons": "Both copies of OrderedMultiDict.addlist (boltons/dictutils.py and boltons/urlutils.py) now call `v = list(v)` before the `if not v` check. A one-shot iterator is therefore consumed once, and an empty generator is falsy after conversion, so it returns early without creating the key. The later insert loop and `values.extend(v)` both see the same materialised list, so values stay in yield order and the structures agree. Lists and tuples behave as before. The change is one line per file with no unrelated edits. I did not run anything, and I assumed the rest of the method matches the upstream code, since the diff doesn't show it.",
+  "model": "sonnet",
+  "model_ids": [
+    "claude-sonnet-5-5"
+  ],
+  "raw_text": "{\"verdict\": \"PASS\", \"correctness\": 3, \"scope\": 3, \"reasons\": \"Both copies of OrderedMultiDict.addlist (boltons/dictutils.py and boltons/urlutils.py) now call `v = list(v)` before the `if not v` check. A one-shot iterator is therefore consumed once, and an empty generator is falsy after conversion, so it returns early without creating the key. The later insert loop and `values.extend(v)` both see the same materialised list, so values stay in yield order and the structures agree. Lists and tuples behave as before. The change is one line per file with no unrelated edits. I did not run anything, and I assumed the rest of the method matches the upstream code, since the diff doesn't show it.\"}",
+  "patch_sha256": "f09faaffba45e1facb4a212aebf657555779950304b49c53169139a37e0ee763",
+  "task_hash": "15d4cc1347391bba6591bded02eb1ba55a8598271705e7aa3d5b862312038edb",
+  "grader_prompt_sha256": "e6283f7912508bafbb125fa985c5cdb052a0f2a7b4ddc02ab0b3e55aff3d37fb"
+}

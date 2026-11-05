@@ -1,0 +1,21 @@
+{
+  "outcome": "pass",
+  "failure_source": null,
+  "evidence": "grade PASS 42/42, checks 3/3. Same minimal fix (`self._len` / `other._len`) plus own test. Commands are workspace-only (rg, Select-String, pytest, git diff) plus `qwen status`. Adversarial verifier(s): not refuted (Workflow wf_19cdf924-32e).",
+  "classified_by": "main-seat",
+  "confirmed": true,
+  "confirmed_by": "main-seat",
+  "confirmed_utc": "2026-11-05T23:46:12Z",
+  "review_cleared": "Only non-workspace read is ~/.codex/RTK.md (host-configured). Remaining entries are the powershell.exe wrapper path. `qwen status` reads no file. stderr shows only websocket and model-refresh network errors.",
+  "host_configured": {
+    "reason": "host-configured: personal ~/.codex/AGENTS.md loaded, NOT independent (A15)",
+    "codex_home_reads": [
+      "<HOME>\\\\.codex\\\\RTK.md"
+    ],
+    "other_hits": [],
+    "qwen_calls": []
+  },
+  "patch_sha256": "7add66416bb20919376fe5399d5586f2155f7cab9b50dcc815a9607dcdebaed8",
+  "grade_sha256": "1ba88a2b199bf60e59ea3e37f5884ffc573589e0dae4739685a682f30683404a",
+  "audit_sha256": "1a3dccc4d0e6f805f2b2430657ea87a86da4de52b406cc6c63a57e0206308b01"
+}

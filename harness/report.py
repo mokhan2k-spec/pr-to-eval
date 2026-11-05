@@ -11,7 +11,8 @@ import sys
 from pathlib import Path
 
 from .agent_runs import (AGENTS, BOUNDARY_STATEMENT, MAX_ATTEMPTS, TRIALS, TRIAL_RE,
-                         grader_digest, interrupted_problems, list_attempts, policy_digest,
+                         grader_digest, host_config_evidence, interrupted_problems,
+                         list_attempts, policy_digest,
                          probe_digest, read_json, sha256_file, task_auditor_digest, task_hash)
 from .tasks import CORPUS_PATH, RUNS_DIR, TASKS_DIR, TaskError, load_corpus, load_tasks, utf8_stdout
 
@@ -49,6 +50,7 @@ def collect(runs_dir: Path) -> list[dict]:
             "evidence": ("attempt " + str(meta.get("status", "unknown")) + ": "
                          + _first_line(meta.get("error"))) if incomplete else cls.get("evidence", ""),
             "classified_by": cls.get("classified_by", ""),
+            "host": cls.get("host_configured"),
             "llm_status": llm.get("status"), "llm_verdict": llm.get("verdict"),
             "meta": meta,
         })
@@ -100,12 +102,23 @@ def render(recs: list[dict], all_recs: list[dict] | None = None) -> str:
     for r in recs:
         groups.setdefault((r["task"], r["agent"]), []).append(r)
 
-    lines += ["## Pass rate", "", HEADER, "|" + "---|" * 7]
+    indep = [r for r in recs if not r["host"]]
+    host = [r for r in recs if r["host"]]
+    lines += ["## Headline (independent trials only)", "",
+              f"- {sum(1 for r in indep if r['outcome'] == 'pass')}/{len(indep)} independent "
+              "trials passed."]
+    if host:
+        lines.append(f"- {len(host)} host-configured trial(s) are reported below but kept out "
+                     "of this figure: they ran with the host's personal agent config loaded, "
+                     "so they are NOT independent.")
+    lines += ["", "## Pass rate", "", HEADER, "|" + "---|" * 7]
     for (task, agent), rs in sorted(groups.items()):
         passed = sum(1 for r in rs if r["outcome"] == "pass")
         counts = [sum(1 for r in rs if r["outcome"] in ("fail", "error") and r["source"] == s)
                   for s in SOURCES]
         contaminated = sum(1 for r in rs if r["outcome"] == "contaminated")
+        if any(r["host"] for r in rs):
+            agent = f"{agent} (host-configured, not independent)"
         lines.append(f"| {task} | {agent} | {passed}/{len(rs)} | "
                      + " | ".join(str(c) for c in counts) + f" | {contaminated} |")
 
@@ -121,6 +134,25 @@ def render(recs: list[dict], all_recs: list[dict] | None = None) -> str:
         lines += ["| Trial | Evidence |", "|---|---|"]
         for r in cont:
             lines.append(f"| {r['task']}/{r['agent']}/trial-{r['trial']} | {_cell(r['evidence'])} |")
+    else:
+        lines.append("None.")
+
+    lines += ["", "## Host-configured trials (not independent)", ""]
+    if host:
+        lines += ["The CLI loaded the host's personal `~/.codex/AGENTS.md`, which no flag "
+                  "disables. The audit shows the agent following it: it read files under "
+                  "`~/.codex` and called the host's local `qwen` helper. `qwen code` means the "
+                  "helper drafted code. The verdicts are real, but the work is not the agent's alone. "
+                  "The qwen count can undercount: it covers the first call in each command the "
+                  "audit flagged, and the audit keeps only the first 200 characters of a command.",
+                  "", "| Trial | Verdict | ~/.codex reads | qwen calls |", "|---|---|---|---|"]
+        for r in host:
+            modes = [c["mode"] for c in r["host"].get("qwen_calls") or []]
+            calls = ", ".join(f"{m} x{modes.count(m)}" for m in sorted(set(modes))) or "none"
+            reads = ", ".join(x.rsplit("\\", 1)[-1].rsplit("/", 1)[-1]
+                              for x in r["host"].get("codex_home_reads") or [])
+            lines.append(f"| {r['task']}/{r['agent']}/trial-{r['trial']} | {r['verdict']} "
+                         f"| {_cell(reads)} | {calls} |")
     else:
         lines.append("None.")
 
@@ -415,7 +447,23 @@ def _check_attempt(label, adir, cur) -> list[str]:
         want_outcome = {"PASS": "pass", "FAIL": "fail", "ERROR": "error"}.get(verdict)
         if outcome != want_outcome:
             problems.append(f"{label}: classification outcome {outcome!r} inconsistent with verdict {verdict!r}")
-    if not aud.get("clean") and outcome != "contaminated" and not cls.get("audit_override"):
+    host = cls.get("host_configured")
+    if host is not None:
+        meta = read_json(adir / "meta.json") or {}
+        fresh = host_config_evidence(aud)
+        if meta.get("agent") != "codex":
+            problems.append(f"{label}: host_configured on a non-codex attempt")
+        if outcome == "contaminated":
+            problems.append(f"{label}: host_configured with outcome contaminated")
+        if not fresh["codex_home_reads"]:
+            problems.append(f"{label}: host_configured but the audit has no ~/.codex read")
+        if fresh["other_hits"] and not cls.get("audit_override"):
+            problems.append(f"{label}: host_configured but audit hits outside ~/.codex were "
+                            "not reviewed as false positives")
+        if any(host.get(k) != v for k, v in fresh.items()):
+            problems.append(f"{label}: host_configured evidence does not match audit.json")
+    if (not aud.get("clean") and outcome != "contaminated" and not cls.get("audit_override")
+            and not host):
         problems.append(f"{label}: audit is not clean but classification is not contaminated")
     if aud.get("review_required") and not str(cls.get("review_cleared", "")).strip():
         problems.append(f"{label}: audit has review_required host-access pattern(s) not cleared at confirm")

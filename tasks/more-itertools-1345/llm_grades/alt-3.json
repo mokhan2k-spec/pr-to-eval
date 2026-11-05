@@ -1,0 +1,11 @@
+{
+  "verdict": "PASS",
+  "correctness": 3,
+  "scope": 3,
+  "reasons": "The new `_count()` computes the length exactly with `divmod` and is not limited by `sys.maxsize`. `__eq__` and `__hash__` now use it, so they work for ascending and descending ranges of any length, and equal ranges with different `stop` values get equal counts and equal hashes. `__len__` is untouched and still raises `OverflowError`. The change adds only a private helper and touches two call sites, with some duplication of the existing length logic.",
+  "model": "sonnet",
+  "model_ids": [
+    "claude-sonnet-5-5"
+  ],
+  "raw_text": "{\"verdict\": \"PASS\", \"correctness\": 3, \"scope\": 3, \"reasons\": \"The new `_count()` computes the length exactly with `divmod` and is not limited by `sys.maxsize`. `__eq__` and `__hash__` now use it, so they work for ascending and descending ranges of any length, and equal ranges with different `stop` values get equal counts and equal hashes. `__len__` is untouched and still raises `OverflowError`. The change adds only a private helper and touches two call sites, with some duplication of the existing length logic.\"}"
+}

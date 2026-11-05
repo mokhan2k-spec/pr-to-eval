@@ -1,0 +1,27 @@
+{
+  "outcome": "pass",
+  "failure_source": null,
+  "evidence": "grade PASS 42/42, checks 3/3. Same minimal fix (`self._len`) plus own tests. Audit also flagged `\\\\more.py` and `\\\\test_more.py`: these come from `Select-String -Path more_itertools\\more.py` and `tests\\test_more.py`, which are workspace-relative. Adversarial verifier(s): not refuted (Workflow wf_19cdf924-32e).",
+  "classified_by": "main-seat",
+  "confirmed": true,
+  "confirmed_by": "main-seat",
+  "confirmed_utc": "2026-11-05T23:46:12Z",
+  "audit_override": true,
+  "review_cleared": "Only non-workspace read is ~/.codex/RTK.md (host-configured). The `\\more.py` and `\\test_more.py` hits are Windows-style relative paths inside the workspace, not host paths. Remaining entries are the powershell.exe wrapper path.",
+  "host_configured": {
+    "reason": "host-configured: personal ~/.codex/AGENTS.md loaded, NOT independent (A15)",
+    "codex_home_reads": [
+      "<HOME>\\\\.codex\\\\RTK.md"
+    ],
+    "other_hits": [
+      "\\\\more.py",
+      "\\\\more.py",
+      "\\\\test_more.py",
+      "\\\\test_more.py"
+    ],
+    "qwen_calls": []
+  },
+  "patch_sha256": "3277715caed5b3f3ab1b8474cf4ef41b8f76c79bb210f458dd6a53179c4e45b6",
+  "grade_sha256": "26ee41816ad217081c5ab40f4b4f90eeba42ca5db3e3b077602b15b64a580192",
+  "audit_sha256": "e94f5ff7d762392ddec238724f1e0309a439abdd9f09524456ef1447f911d3d8"
+}

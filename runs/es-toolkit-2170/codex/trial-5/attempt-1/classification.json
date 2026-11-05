@@ -1,0 +1,26 @@
+{
+  "outcome": "pass",
+  "failure_source": null,
+  "evidence": "grade.json: PASS, 17/17 tests, 3/3 checks. Commands only touch workspace (src/promise/*, src/error/TimeoutError.ts, git diff/status, tsc on the two changed files) plus Get-Content <HOME>\\.codex\\RTK.md; final vitest run exit 0. Adversarial verifier(s): not refuted (Workflow wf_19cdf924-32e).",
+  "classified_by": "main-seat",
+  "confirmed": true,
+  "confirmed_by": "main-seat",
+  "confirmed_utc": "2026-11-05T23:46:11Z",
+  "review_cleared": "11 review entries are the powershell.exe wrapper path plus a relative import in the patch; the only out-of-workspace read is ~/.codex/RTK.md.",
+  "host_configured": {
+    "reason": "host-configured: personal ~/.codex/AGENTS.md loaded, NOT independent (A15)",
+    "codex_home_reads": [
+      "<HOME>\\\\.codex\\\\RTK.md"
+    ],
+    "other_hits": [],
+    "qwen_calls": [
+      {
+        "where": "line 11 command_execution.command:1",
+        "mode": "code"
+      }
+    ]
+  },
+  "patch_sha256": "fb8e543d3f121135c2a91b493b46a80f7c45c8072838950b49791524dd5f7964",
+  "grade_sha256": "f4417477cd2314403dcb3016b489af48f019527c243a38246999e836993f5de1",
+  "audit_sha256": "17e7f74d80487f0e729ac996d5a4049436fc6b967394087537baf4eb1705f846"
+}

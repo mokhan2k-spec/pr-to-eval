@@ -1,0 +1,76 @@
+diff --git a/boltons/dictutils.py b/boltons/dictutils.py
+index 12c58de..a181a3a 100644
+--- a/boltons/dictutils.py
++++ b/boltons/dictutils.py
+@@ -225,6 +225,7 @@ class OrderedMultiDict(dict):
+         Called ``addlist`` for consistency with :meth:`getlist`, but
+         tuples and other sequences and iterables work.
+         """
++        v = list(v)
+         if not v:
+             return
+         self_insert = self._insert
+diff --git a/boltons/urlutils.py b/boltons/urlutils.py
+index 712e5a1..ba84598 100644
+--- a/boltons/urlutils.py
++++ b/boltons/urlutils.py
+@@ -1123,6 +1123,7 @@ class OrderedMultiDict(dict):
+         Called ``addlist`` for consistency with :meth:`getlist`, but
+         tuples and other sequences and iterables work.
+         """
++        v = list(v)
+         if not v:
+             return
+         self_insert = self._insert
+diff --git a/tests/test_addlist_iterables.py b/tests/test_addlist_iterables.py
+new file mode 100644
+index 0000000..c6b41fb
+--- /dev/null
++++ b/tests/test_addlist_iterables.py
+@@ -0,0 +1,46 @@
++import pytest
++
++from boltons.dictutils import OrderedMultiDict, FastIterOrderedMultiDict
++from boltons.urlutils import OrderedMultiDict as URLOrderedMultiDict
++from boltons.urlutils import QueryParamDict, URL
++
++
++@pytest.mark.parametrize('dict_type', [OrderedMultiDict, FastIterOrderedMultiDict,
++                                       URLOrderedMultiDict, QueryParamDict])
++@pytest.mark.parametrize('iterable', [list, tuple, iter,
++                                     lambda values: (v for v in values),
++                                     lambda values: range(len(values))])
++def test_addlist_iterables(dict_type, iterable):
++    omd = dict_type()
++    omd.addlist('missing', iterable([]))
++    assert 'missing' not in omd
++    assert len(omd) == 0
++    assert omd.items(multi=True) == []
++
++    omd.add('a', -2)
++    omd.addlist('a', [-1])
++    omd.add('b', 9)
++    omd.addlist('a', iterable([0, 1, 2]))
++    omd.addlist('a', iterable([]))
++    omd.addlist('c', iterable([0, 1, 2]))
++
++    expected = [('a', -2), ('a', -1), ('b', 9),
++                ('a', 0), ('a', 1), ('a', 2),
++                ('c', 0), ('c', 1), ('c', 2)]
++    assert omd.items(multi=True) == expected
++    assert omd.getlist('a') == [-2, -1, 0, 1, 2]
++    assert omd.getlist('c') == [0, 1, 2]
++    assert omd.get('a') == omd['a'] == 2
++    assert omd.values(multi=True) == [v for k, v in expected]
++    assert omd.keys() == ['a', 'b', 'c']
++    assert omd.popall('a') == [-2, -1, 0, 1, 2]
++    assert omd.items(multi=True) == [('b', 9), ('c', 0), ('c', 1), ('c', 2)]
++
++
++def test_query_params_addlist_generator():
++    url = URL('https://example.com/?a=first&b=other')
++    url.query_params.addlist('a', (v for v in ['second', 'third']))
++    url.query_params.addlist('missing', iter([]))
++    assert url.query_params.getlist('a') == ['first', 'second', 'third']
++    assert url.query_params.get('a') == 'third'
++    assert url.to_text() == 'https://example.com/?a=first&b=other&a=second&a=third'

@@ -1,0 +1,118 @@
+diff --git a/src/promise/withTimeout.spec.ts b/src/promise/withTimeout.spec.ts
+index c85448f..34f8a0b 100644
+--- a/src/promise/withTimeout.spec.ts
++++ b/src/promise/withTimeout.spec.ts
+@@ -1,8 +1,86 @@
+-import { describe, expect, it } from 'vitest';
++import { afterEach, describe, expect, it, vi } from 'vitest';
++import { TimeoutError } from '../error/TimeoutError.ts';
+ import { delay } from './delay.ts';
+ import { withTimeout } from './withTimeout.ts';
+ 
+ describe('withTimeout', () => {
++  afterEach(() => {
++    vi.useRealTimers();
++    vi.restoreAllMocks();
++  });
++
++  it.each([false, true])('cleans up after success (with signal: %s)', async withSignal => {
++    vi.useFakeTimers();
++    const controller = new AbortController();
++    const add = vi.spyOn(controller.signal, 'addEventListener');
++    const remove = vi.spyOn(controller.signal, 'removeEventListener');
++    const value = {};
++
++    await expect(
++      withTimeout(() => Promise.resolve(value), 1000, withSignal ? { signal: controller.signal } : {})
++    ).resolves.toBe(value);
++
++    expect(vi.getTimerCount()).toBe(0);
++    if (withSignal) {
++      expect(add).toHaveBeenCalledTimes(1);
++      expect(remove).toHaveBeenCalledWith('abort', add.mock.calls[0][1]);
++    }
++  });
++
++  it.each([false, true])('cleans up after failure (with signal: %s)', async withSignal => {
++    vi.useFakeTimers();
++    const controller = new AbortController();
++    const add = vi.spyOn(controller.signal, 'addEventListener');
++    const remove = vi.spyOn(controller.signal, 'removeEventListener');
++    const reason = {};
++
++    await expect(
++      withTimeout(() => Promise.reject(reason), 1000, withSignal ? { signal: controller.signal } : {})
++    ).rejects.toBe(reason);
++
++    expect(vi.getTimerCount()).toBe(0);
++    if (withSignal) {
++      expect(add).toHaveBeenCalledTimes(1);
++      expect(remove).toHaveBeenCalledWith('abort', add.mock.calls[0][1]);
++    }
++  });
++
++  it('cleans up after timing out', async () => {
++    vi.useFakeTimers();
++    const controller = new AbortController();
++    const add = vi.spyOn(controller.signal, 'addEventListener');
++    const remove = vi.spyOn(controller.signal, 'removeEventListener');
++    const result = withTimeout(() => new Promise(() => {}), 50, { signal: controller.signal });
++    const assertion = expect(result).rejects.toBeInstanceOf(TimeoutError);
++
++    await vi.advanceTimersByTimeAsync(50);
++    await assertion;
++
++    expect(vi.getTimerCount()).toBe(0);
++    expect(remove).toHaveBeenCalledWith('abort', add.mock.calls[0][1]);
++  });
++
++  it.each([false, true])('awaits run without a deadline when aborted (already aborted: %s)', async alreadyAborted => {
++    vi.useFakeTimers();
++    const controller = new AbortController();
++    if (alreadyAborted) {
++      controller.abort();
++    }
++    const result = withTimeout(
++      async () => {
++        await delay(100);
++        return 'foo';
++      },
++      50,
++      { signal: controller.signal }
++    );
++    controller.abort();
++
++    await vi.advanceTimersByTimeAsync(100);
++    await expect(result).resolves.toBe('foo');
++    expect(vi.getTimerCount()).toBe(0);
++  });
++
+   it('returns the result value if a response is received before the specified wait time', async () => {
+     const result = await withTimeout(async () => {
+       await delay(50);
+diff --git a/src/promise/withTimeout.ts b/src/promise/withTimeout.ts
+index 4e6ba6e..1d88991 100644
+--- a/src/promise/withTimeout.ts
++++ b/src/promise/withTimeout.ts
+@@ -47,5 +47,20 @@ export async function withTimeout<T>(
+   ms: number,
+   { signal }: WithTimeoutOptions = {}
+ ): Promise<T> {
+-  return Promise.race([run(), timeout(ms, { signal })]);
++  const result = run();
++  const controller = new AbortController();
++  const abortHandler = () => controller.abort();
++
++  if (signal?.aborted) {
++    controller.abort();
++  } else {
++    signal?.addEventListener('abort', abortHandler, { once: true });
++  }
++
++  try {
++    return await Promise.race([result, timeout(ms, { signal: controller.signal })]);
++  } finally {
++    controller.abort();
++    signal?.removeEventListener('abort', abortHandler);
++  }
+ }

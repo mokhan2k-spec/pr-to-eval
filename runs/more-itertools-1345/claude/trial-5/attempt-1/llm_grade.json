@@ -1,0 +1,15 @@
+{
+  "status": "graded",
+  "verdict": "PASS",
+  "correctness": 3,
+  "scope": 3,
+  "reasons": "Both `__eq__` and `__hash__` now read the precomputed `self._len`, a plain Python int, instead of `len()`, so lengths above `sys.maxsize` no longer overflow. `__len__` is untouched and still raises `OverflowError`, and the existing start/step comparison and range-style hash scheme are kept, so equal ranges with different `stop` values compare and hash equal. The change is two lines with no public API change. I could not see the rest of `__eq__` or `__hash__`, and I assumed `other` is already guarded as a `numeric_range` and that no other `len()` call remains.",
+  "model": "sonnet",
+  "model_ids": [
+    "claude-sonnet-5-5"
+  ],
+  "raw_text": "{\"verdict\": \"PASS\", \"correctness\": 3, \"scope\": 3, \"reasons\": \"Both `__eq__` and `__hash__` now read the precomputed `self._len`, a plain Python int, instead of `len()`, so lengths above `sys.maxsize` no longer overflow. `__len__` is untouched and still raises `OverflowError`, and the existing start/step comparison and range-style hash scheme are kept, so equal ranges with different `stop` values compare and hash equal. The change is two lines with no public API change. I could not see the rest of `__eq__` or `__hash__`, and I assumed `other` is already guarded as a `numeric_range` and that no other `len()` call remains.\"}",
+  "patch_sha256": "492c768842ee9c1a1f51ca174185b25d00ac72b78bf7f5e76ebda7d20417acb2",
+  "task_hash": "84d0ef6dca6a94aaf72b46b66020a1a86e1851335c807ab7703675bcdd8c8a48",
+  "grader_prompt_sha256": "dcf7f919c67ec25b06f9fc97987319de1601be3cebe72cc761e63a392f484680"
+}
