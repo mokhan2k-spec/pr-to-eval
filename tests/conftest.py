@@ -37,7 +37,8 @@ def good_probe_record(agent: str, cli_version: str) -> dict:
     for r in bp.REQUIRED_ALLOWED:
         rec[r] = {"result": "allowed"}
     rec["_binding"] = {"cli_version": cli_version, "policy_digest": agent_runs.policy_digest(agent),
-                       "probe_digest": agent_runs.probe_digest()}
+                       "probe_digest": agent_runs.probe_digest(),
+                       "read_scope": agent_runs.READ_SCOPE if agent == "claude" else None}
     rec["_ok"] = True
     rec["_problems"] = []
     return rec

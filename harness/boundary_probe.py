@@ -452,7 +452,7 @@ def probe_agent(agent: str, out_dir: Path, exe=None, scope: str | None = None,
         res.update(routes)
         runs.append(info)
     res["_runs"] = runs
-    res["_binding"] = agent_runs.probe_binding(agent, exe)
+    res["_binding"] = agent_runs.probe_binding(agent, exe, scope)
     res["_run"] = {"read_scope": (scope or agent_runs.READ_SCOPE) if agent == "claude" else None,
                    "timed_out": any(r["timed_out"] for r in runs)}
     if agent == "codex" and isinstance(res.get("read_shell"), dict):
@@ -490,7 +490,7 @@ def main(argv=None) -> int:
         # routes measured under different CLI or policy versions must not be mixed (R18)
         for agent in selected:
             stored = probe["agents"].get(agent)
-            if isinstance(stored, dict) and stored.get("_binding") != agent_runs.probe_binding(agent, exes.get(agent)):
+            if isinstance(stored, dict) and stored.get("_binding") != agent_runs.probe_binding(agent, exes.get(agent), args.scope):
                 print(f"REFUSED: the stored {agent} probe was measured under a different CLI or policy "
                       f"binding (stored {stored.get('_binding')!r}); a partial re-run would mix routes. "
                       "Re-run all scenarios (omit --scenarios).", file=sys.stderr)

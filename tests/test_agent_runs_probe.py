@@ -192,6 +192,7 @@ import json
 from pathlib import Path
 
 from harness import agent_runs
+from conftest import good_probe_record
 
 
 def _claude_transcript(cmd, out, err):
@@ -309,16 +310,56 @@ def _fake_scenario(a, s, o, e, sc, t):
 
 
 def _bind(monkeypatch, binding):
-    monkeypatch.setattr(agent_runs, "probe_binding", lambda agent, exe=None: binding, raising=False)
+    monkeypatch.setattr(agent_runs, "probe_binding", lambda agent, exe=None, scope=None: binding, raising=False)
 
 
 def test_probe_agent_records_the_binding(monkeypatch, tmp_path):
     seen = []
     monkeypatch.setattr(agent_runs, "probe_binding",
-                        lambda agent, exe=None: seen.append((agent, exe)) or BIND_A, raising=False)
+                        lambda agent, exe=None, scope=None: seen.append((agent, exe, scope)) or BIND_A,
+                        raising=False)
     monkeypatch.setattr(bp, "probe_scenario", _fake_scenario)
     res = bp.probe_agent("claude", tmp_path, exe="X", scenarios=("vitest",))
-    assert res["_binding"] == BIND_A and seen == [("claude", "X")]
+    assert res["_binding"] == BIND_A and seen == [("claude", "X", None)]
+
+
+def test_probe_binding_records_the_measured_scope(monkeypatch, tmp_path):
+    """R25: a probe run with --scope absolute binds the absolute policy, so it cannot
+    certify the default relative policy that ordinary runs use."""
+    monkeypatch.setattr(bp, "probe_scenario", _fake_scenario)
+    monkeypatch.setattr(agent_runs, "cli_version", lambda agent, exe=None: "fake-cli 1.0")
+    res = bp.probe_agent("claude", tmp_path, scope="absolute", scenarios=("vitest",))
+    b = res["_binding"]
+    assert b["read_scope"] == "absolute"
+    assert b["policy_digest"] == agent_runs.policy_digest("claude", scope="absolute")
+    assert b["policy_digest"] != agent_runs.policy_digest("claude")
+    assert agent_runs.READ_SCOPE == "relative"
+
+
+def test_absolute_scope_probe_does_not_gate_default_runs(monkeypatch, tmp_path):
+    runs = tmp_path / "runs"
+    out = runs / agent_runs.BOUNDARY_DIR
+    out.mkdir(parents=True)
+    rec = good_probe_record("claude", "fake-cli 1.0")
+    rec["_binding"] = dict(rec["_binding"], read_scope="absolute",
+                           policy_digest=agent_runs.policy_digest("claude", scope="absolute"))
+    (out / "probe.json").write_text(json.dumps({"agents": {"claude": rec}}), encoding="utf-8")
+    monkeypatch.setattr(agent_runs, "cli_version", lambda agent, exe=None: "fake-cli 1.0")
+    _, problems = agent_runs.probe_gate(runs, "claude")
+    assert any("policy_digest is stale" in p for p in problems)
+    assert any("read_scope is stale" in p for p in problems)
+
+
+def test_partial_rerun_with_a_different_scope_is_refused(monkeypatch, tmp_path, capsys):
+    """R25: routes measured under one scope must not be mixed with another scope's routes."""
+    monkeypatch.setattr(bp, "probe_scenario", _fake_scenario)
+    monkeypatch.setattr(agent_runs, "cli_version", lambda agent, exe=None: "fake-cli 1.0")
+    runs = tmp_path / "runs"
+    (runs / agent_runs.BOUNDARY_DIR).mkdir(parents=True)
+    assert bp.main(["--agent", "claude", "--runs-dir", str(runs)]) in (0, 1)
+    rc = bp.main(["--agent", "claude", "--runs-dir", str(runs), "--scope", "absolute",
+                  "--scenarios", "vitest"])
+    assert rc == 2 and "REFUSED" in capsys.readouterr().err
 
 
 def _stored(tmp_path, binding):

@@ -582,7 +582,9 @@ def test_policy_digest_tracks_policy(monkeypatch):
 def test_probe_binding_shape():
     b = agent_runs.probe_binding("claude", fake("commit"))
     assert b == {"cli_version": "fake-cli 1.0", "policy_digest": agent_runs.policy_digest("claude"),
-                 "probe_digest": agent_runs.probe_digest(), "platform": agent_runs.sys.platform}
+                 "probe_digest": agent_runs.probe_digest(), "platform": agent_runs.sys.platform,
+                 "read_scope": agent_runs.READ_SCOPE}
+    assert agent_runs.probe_binding("codex", fake("commit"))["read_scope"] is None
 
 
 # --- R21: attempt lifecycle ---------------------------------------------------------------
@@ -693,3 +695,21 @@ def test_alt_label_must_be_alt_n(env, capsys):
     install_probe(env)
     assert agent_runs.main(alt_argv(env, fake_launcher(env))[:-4] + ["--label", "reference",
                            "--exe", "claude=x"]) == 1
+
+
+# --- R24: frozen evidence is never rewritten -------------------------------------------------
+
+@pytest.mark.parametrize("status,confirm", [("incomplete", True), ("incomplete", False),
+                                            ("started", False)])
+def test_regrade_skips_frozen_attempts_even_with_all(env, capsys, status, confirm):
+    d = make_attempt(env, status, files=("transcript.jsonl", "final.patch"))
+    if confirm:
+        agent_runs.confirm_interrupted(d, "grader crashed; patch salvaged")
+    before = {p.name: p.read_bytes() for p in d.iterdir()}
+    rc = agent_runs.main(["regrade", "--tasks-dir", str(env["tasks_dir"]),
+                          "--runs-dir", str(env["runs"]), "--all"])
+    assert rc == 0 and "skipped" in capsys.readouterr().out
+    assert {p.name: p.read_bytes() for p in d.iterdir()} == before
+    for writer in (agent_runs.regrade_attempt, agent_runs.reaudit_attempt):
+        with pytest.raises(ValueError, match="frozen"):
+            writer(env["task"], d, force=True)

@@ -347,27 +347,34 @@ def probe_digest() -> str:
 _FILE_TOOL_RE = re.compile(r"^(Read|Edit|Write)\(.*\*\*\)$")
 
 
-def policy_digest(agent: str, platform: str | None = None) -> str:
+def policy_digest(agent: str, platform: str | None = None, scope: str | None = None) -> str:
     """sha256 over the agent's run policy (argv with the workspace as a placeholder, env
     allowlist NAMES, fixed env values, read scope, model, effort). Machine independent: no
     absolute paths, no usernames, no env values. The env part uses the ENV_ALLOW policy
     list, not the keys that happen to be set on this machine. `platform` is the one the run
-    was made on (the codex argv differs on Windows), so a Linux checkout can verify it."""
-    cmd = build_command(agent, Path("<WS>"), exe=[agent], platform=platform)
-    if agent == "claude" and READ_SCOPE == "absolute":
+    was made on (the codex argv differs on Windows), so a Linux checkout can verify it.
+    `scope` is the Claude read scope actually measured (default READ_SCOPE): a probe run with
+    --scope absolute binds the absolute policy and cannot certify the default one (R25)."""
+    scope = scope or READ_SCOPE
+    cmd = build_command(agent, Path("<WS>"), exe=[agent], scope=scope, platform=platform)
+    if agent == "claude" and scope == "absolute":
         cmd = [_FILE_TOOL_RE.sub(r"\1(<WS>/**)", c) for c in cmd]
     fixed = {"CLAUDE_CODE_DISABLE_CLAUDE_MDS": "1"} if agent == "claude" else {}
     policy = {"agent": agent, "argv": cmd,
               "env_names": sorted(set(ENV_ALLOW) | set(fixed)), "env_fixed": fixed,
-              "read_scope": READ_SCOPE if agent == "claude" else None,
+              "read_scope": scope if agent == "claude" else None,
               "model": CLAUDE_MODEL if agent == "claude" else CODEX_MODEL,
               "effort": None if agent == "claude" else CODEX_EFFORT}
     return sha256_bytes(json.dumps(policy, sort_keys=True, ensure_ascii=True).encode("utf-8"))
 
 
-def probe_binding(agent: str, exe=None) -> dict:
-    return {"cli_version": cli_version(agent, exe), "policy_digest": policy_digest(agent),
-            "probe_digest": probe_digest(), "platform": sys.platform}
+def probe_binding(agent: str, exe=None, scope: str | None = None) -> dict:
+    """What a probe record certifies. `scope` is the read scope the probe measured; launches
+    and report --check compare against the default (READ_SCOPE) policy that runs use."""
+    return {"cli_version": cli_version(agent, exe),
+            "policy_digest": policy_digest(agent, scope=scope),
+            "probe_digest": probe_digest(), "platform": sys.platform,
+            "read_scope": (scope or READ_SCOPE) if agent == "claude" else None}
 
 
 # --- workspace and patch capture ------------------------------------------
@@ -609,7 +616,7 @@ def probe_gate(runs_dir: Path, agent: str, exe=None) -> tuple[dict | None, list[
         problems.append(f"{agent}: probe record has no _binding (re-run the probe)")
     else:
         cur = probe_binding(agent, exe)
-        for k in ("cli_version", "policy_digest", "probe_digest"):
+        for k in ("cli_version", "policy_digest", "probe_digest", "read_scope"):
             if bound.get(k) != cur[k]:
                 problems.append(f"{agent}: probe _binding.{k} is stale (probed {bound.get(k)!r}, "
                                 f"now {cur[k]!r}); re-run the probe")
@@ -850,11 +857,33 @@ def _append_history(attempt_dir: Path, name: str, old: dict | None) -> None:
             f.write(json.dumps(dict(old, superseded_utc=now_utc()), ensure_ascii=False) + "\n")
 
 
+def frozen_reason(attempt_dir: Path) -> str | None:
+    """Why an attempt's evidence may not be rewritten (None = it may be). Only a complete,
+    unconfirmed-interrupted attempt is regraded or re-audited: a started or incomplete
+    attempt is superseded by a retry, and a confirmed interrupted.json inventories its files
+    by hash, so writing grade.json or audit.json there would break that record (R24)."""
+    attempt_dir = Path(attempt_dir)
+    if (attempt_dir / INTERRUPTED).exists():
+        return "confirmed interrupted (interrupted.json inventories its files)"
+    meta = read_json(attempt_dir / "meta.json")
+    status = meta.get("status") if isinstance(meta, dict) else None
+    if status != "complete":
+        return f"status {status!r} (only complete attempts are regraded)"
+    return None
+
+
+def _refuse_frozen(attempt_dir: Path) -> None:
+    why = frozen_reason(attempt_dir)
+    if why:
+        raise ValueError(f"{attempt_dir}: evidence is frozen: {why}")
+
+
 def regrade_attempt(task: Task, attempt_dir: Path, force: bool = False) -> bool:
     """Recompute grade.json if it no longer matches the patch, the task or the grader code /
     toolchain (grader_digest). The old grade is appended to grade-history.jsonl; the
     classification and llm_grade are marked stale and need re-confirmation."""
     attempt_dir = Path(attempt_dir)
+    _refuse_frozen(attempt_dir)
     patch = attempt_dir / "final.patch"
     if not patch.is_file():
         return False
@@ -879,6 +908,7 @@ def reaudit_attempt(task: Task, attempt_dir: Path, force: bool = False) -> bool:
     classification."""
     from . import audit as audit_mod
     attempt_dir = Path(attempt_dir)
+    _refuse_frozen(attempt_dir)
     tpath, ppath = attempt_dir / "transcript.jsonl", attempt_dir / "final.patch"
     if not tpath.is_file() or not ppath.is_file():
         return False
@@ -921,6 +951,10 @@ def cmd_regrade(args) -> int:
             print(f"{adir}: unknown task", file=sys.stderr)
             continue
         label = f"{task_id}/{adir.parts[-3]}/{adir.parts[-2]}/{adir.name}"
+        why = frozen_reason(adir)
+        if why:                                  # also with --all: never rewrite frozen evidence
+            print(f"skipped {label}: {why}")
+            continue
         if reaudit_attempt(tasks[task_id], adir, force=args.all):
             n += 1
             print(f"re-audited {label}")
