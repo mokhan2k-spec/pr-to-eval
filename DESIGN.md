@@ -98,11 +98,12 @@ A flawed solution matches its expectation only if its verdict is FAIL **and** ev
 
 ## Grading (grade.py)
 
-1. `ws = make_workspace(task, patch)`; copy `hidden/` to `ws/<hidden_dest>`.
-2. Run `test_cmd` in `ws` with `timeout_s`, `PYTHONPATH=ws`. A timeout counts as all tests failed (reason "timeout").
+1. `ws = make_workspace(task, patch)`; copy `hidden/` to `ws/<hidden_dest>`. If the patch does not apply, or the toolchain or workspace fails, the verdict is ERROR (infrastructure), never PASS.
+2. Run `test_cmd` in `ws` with `timeout_s`, writing JUnit XML. A timeout is FAIL (reason "timeout").
 3. Run `bash checks.sh ws <pristine upstream>`; parse the PASS/FAIL lines.
-4. Verdict is PASS iff ≥1 test ran, all tests passed and all checks passed. No LLM is involved in the verdict.
-Result dict: `{"verdict", "tests": {"total", "passed", "failed": [ids]}, "checks": {"total", "passed", "failed": ["check:<name>"]}, "timed_out": bool}`.
+4. Verdict is PASS iff all of these hold: exit 0; the JUnit file parses; total > 0; no failed, errored or skipped tests; every id in `expected_tests.json` is present; every check passes. Otherwise FAIL. No LLM is involved in the verdict.
+5. Scope: every changed file must be inside the task's allowed paths. Relative imports resolve against the workspace package; external imports are checked in every allowed changed file.
+Result dict: `{"verdict": "PASS"|"FAIL"|"ERROR", "tests": {"total", "passed", "failed": [ids]}, "checks": {"total", "passed", "failed": ["check:<name>"]}, "timed_out": bool}`. The reasons for each rule are in [docs/grading-decisions.md](docs/grading-decisions.md).
 
 ## Validation table (validate.py, deterministic)
 
@@ -117,23 +118,29 @@ One row per (task, solution), sorted by task id then reference, alt-*, flawed-*:
 
 Question it answers: do the hidden tests catch small mistakes in the code they are meant to protect?
 - Apply reference.patch, then for each target line range generate first-order mutants, one at a time, with these text operators (skip comment lines and string literals):
-  `==`↔`!=`, `===`↔`!==`, `<`→`<=`, `<=`→`<`, `>`→`>=`, `>=`→`>`, ` and `↔` or `, `&&`↔`||`, `not ` → remove, `True`↔`False`, `true`↔`false`, `+ 1`↔`- 1`, `return X` → `return None` (py) / `return undefined` (ts), and statement deletion of a whole line that is a bare call or assignment (replace with `pass` in Python, keep indentation; empty in TS).
+  `==`↔`!=`, `===`↔`!==`, `<`→`<=`, `<=`→`<`, `>`→`>=`, `>=`→`>`, ` and `↔` or `, `&&`↔`||`, `not ` → remove, `True`↔`False`, `true`↔`false`, `+ 1`↔`- 1`, `return X` → `return None` (py) / `return undefined` (ts), negate a single-line `if`/`elif`/`while` condition (`not (…)` / `!(…)`), and statement deletion of a whole line that is a bare call or assignment (replace with `pass` in Python, keep indentation; empty in TS).
 - Mutant id: `<file>:<line>:<operator>:<occurrence>` (stable).
-- Run only the hidden tests (test_cmd) per mutant; killed = any test failed or timeout or crash.
-- Fail if any surviving mutant is not in `equivalent_mutants.json`, or if a listed one is now killed (stale entry).
+- Run only the hidden tests (test_cmd) per mutant. Killed = verdict FAIL (including a timeout). A mutant whose grade is ERROR raises `MutationInfraError` and fails the gate; it never counts as killed.
+- Gate: ≥5 mutants per task and ≥1 per target range. Every survivor must be in `equivalent_mutants.json` (`{mutant id: justification}`, ≥20 non-blank characters). A listed mutant that is now killed is a stale entry and fails the gate.
 - Table: `| Task | Mutants | Killed | Equivalent (justified) | Unjustified survivors | Score |` + README check, same as validation.
 
 ## Agent runs (agent_runs.py, manual — never in CI)
 
-For each task × agent × n (default 5):
-1. Workspace OUTSIDE the repo: `%TEMP%/pr-to-eval-runs/<task>-<agent>-<n>/` = copy of `upstream/` + `TASK.md`; TypeScript tasks also get `package.json` + `package-lock.json` and `npm ci`. `git init` + one baseline commit, so the diff is clean.
-2. Prompt: "Read TASK.md in this directory and complete the task. Work only inside this directory. Run the existing tests if useful. When done, stop."
-3. Claude Code: env `CLAUDE_CODE_DISABLE_CLAUDE_MDS=1`; `claude -p <prompt> --model sonnet --setting-sources project --strict-mcp-config --no-session-persistence --permission-mode bypassPermissions --disallowedTools WebFetch WebSearch Agent --output-format stream-json --verbose`.
-   Codex: `codex exec --ignore-user-config --ephemeral --skip-git-repo-check -s workspace-write -m gpt-6.1-sol -c model_reasoning_effort="medium" --json -C <ws> <prompt>`.
-   Both: cwd = workspace, wall-clock limit 20 min.
-4. Store `runs/<task>/<agent>-<n>/`: `meta.json` (agent, cli version, model, command line with the prompt, start/end UTC, exit code, timed_out), `transcript.jsonl` (stdout), `stderr.txt`, `final.patch` (`git diff` against the baseline, excluding node_modules), `grade.json` (grade.py on final.patch applied to a fresh workspace), `classification.json`.
-5. classification.json: `{"outcome": "pass"|"fail", "failure_source": null|"agent"|"environment"|"grader", "evidence": "...", "classified_by": "..."}`. Auto-classifier proposes: no patch + non-zero exit / CLI error → environment; patch applies but tests fail → agent; patch fails to apply → environment. A human (or the main reviewer) confirms every failure and may change it to grader, with the evidence quoted.
-6. `runs/SUMMARY.md`: per task × agent pass count k/5 and the failure-source breakdown.
+For each task × agent × trial (5 trials):
+1. **Boundary probe first** (`boundary_probe.py`). It plants canaries outside a probe workspace and asks each agent to read them, search for them, reach the network, and run pytest/vitest code that does the same. Each route is `allowed`, `denied` (explicit permission or sandbox evidence only) or `inconclusive` (fails the probe). Any HTTP status means the network is reachable. Results go to `runs/_boundary/` and are embedded in each attempt's meta.json.
+2. **Workspace outside the repo:** `%TEMP%/pr2e-runs/<task>/<agent>/trial-<n>/attempt-<m>/`. It is a copy of `upstream/` + `TASK.md`, never `hidden/` or `solutions/`. TypeScript tasks get their own copy of `node_modules`. `git init` + one baseline commit, so the diff is clean. Environment: an allowlist of OS variables only (no tokens or API keys).
+3. **Prompt:** "Read TASK.md in this directory and complete the task. Work only inside this directory. Run the existing tests if useful. When done, stop."
+4. **Claude Code** (`--model sonnet`, env `CLAUDE_CODE_DISABLE_CLAUDE_MDS=1`): `--setting-sources project --strict-mcp-config --no-session-persistence --permission-mode dontAsk --allowedTools Read(./**) Edit(./**) Write(./**) Bash(python -m pytest:*) Bash(npx vitest:*) Bash(npx tsc:*) Bash(git diff:*) Bash(git status:*) Bash(git log:*) --disallowedTools WebFetch WebSearch Agent --output-format stream-json --verbose`. Bare Glob and Grep are not allowed: the probe measured them reading outside the workspace.
+   **Codex:** `codex exec --ignore-user-config --ephemeral --skip-git-repo-check -s workspace-write -c windows.sandbox="elevated" -c sandbox_workspace_write.network_access=false -c project_doc_max_bytes=0 -m gpt-6.1-sol -c model_reasoning_effort="medium" --json -C <ws> <prompt>`.
+   Both: wall-clock limit 20 min.
+5. **Attempt identity:** the attempt dir is created exclusively and meta.json is written with `status: started` before launch. It is finalised as `complete` or `incomplete`, never deleted or overwritten. At most 2 attempts per trial; incomplete ones count toward the limit, and the batch exits non-zero.
+6. **Evidence per attempt:** `meta.json` (agent, CLI version, requested and observed model, command line, start/end UTC, exit code, timed_out, embedded probe), `transcript.jsonl`, `stderr.txt`, `final.patch` (`git diff` against the baseline), `grade.json` (grade.py on final.patch in a fresh workspace, with `grader_digest`), `audit.json` (with `auditor_digest`), `llm_grade.json` (advisory) and `classification.json`.
+7. **Audit (audit.py):** scans the transcript and changed files for reads outside the workspace, hidden-identifier leaks (contamination) and host-access patterns (`review_required`, cleared at confirmation with a reason).
+8. **Classification:** `{"outcome": "pass"|"fail"|"contaminated", "failure_source": null|"agent"|"environment"|"grader", "evidence": "...", "classified_by": "..."}`. The auto-classifier proposes; the reviewer confirms every attempt with `agent_runs confirm`, quoting evidence.
+9. **Staleness:** `agent_runs regrade` re-grades and re-audits any attempt whose patch, task, `grader_digest` or `auditor_digest` changed, appends to the history files and marks the classification stale.
+10. **Report:** `report --write` writes `runs/SUMMARY.md`: per task × agent pass count k/5, the failure-source breakdown, the boundary statement and an "All attempts" section listing retries, contamination and incomplete attempts. `report --check` validates every attempt's evidence and bindings and fails on anything missing or stale.
+
+**Boundary statement:** direct outside reads and network by the agents' own tools are denied for Claude (path-scoped file tools, Bash allowlist). Codex network is denied; Codex shell reads are detected, not prevented. Code the agent runs (its own tests) is detected by the audit (leak check plus static scan), NOT prevented. This is a documented limitation.
 
 ## Rules for every builder
 

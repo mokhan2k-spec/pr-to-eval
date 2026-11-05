@@ -30,6 +30,21 @@ Mutation testing: small mistakes are injected into the reference solution and th
 
 Results and the failure-source breakdown: [runs/SUMMARY.md](runs/SUMMARY.md).
 
+Each task was run 5 times with Claude Code and 5 times with Codex. The full evidence for every attempt is committed under `runs/`: transcript, final patch, grade, audit and the confirmed classification. Agent runs need the two CLIs and a signed-in account, so they are manual and never run in CI. The make targets are:
+
+- `make boundary-probe`: checks what each agent can reach outside its workspace.
+- `make agent-runs`: runs the trials.
+- `make regrade`: re-grades attempts after a grader or auditor change.
+- `make confirm ATTEMPT=… SOURCE=… EVIDENCE="…"`: records the reviewer's classification.
+- `make report` and `make report-check`: write and verify the summary.
+- `make llm-grade`: adds the advisory LLM grade.
+- `make privacy`: scans the files and the git history before anything is pushed.
+
+**Isolation boundary (a documented limitation).**
+- Claude: direct reads and network access outside the workspace by its own tools are denied. File tools are path-scoped, and Bash is limited to an allowlist.
+- Codex: network access is denied. Shell reads outside the workspace are detected but not prevented.
+- Code the agent runs, such as its own tests: outside reads and network access are detected by the audit (leak check plus a static scan), NOT prevented.
+
 ## Grading decisions
 
 Why each grader rule exists and what changed: [docs/grading-decisions.md](docs/grading-decisions.md).
