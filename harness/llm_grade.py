@@ -110,6 +110,9 @@ def is_current(existing: dict | None, want: dict) -> bool:
 def grade_attempt(task: Task, adir: Path, force: bool = False, exe=None, dry_run: bool = False):
     """Write adir/llm_grade.json (always): graded | not_graded (empty patch) | error."""
     out = adir / "llm_grade.json"
+    meta = read_json(adir / "meta.json") or {}
+    if meta.get("status") != "complete":
+        return f"skipped (attempt is {meta.get('status', 'unknown')}, not complete)"
     patch = (adir / "final.patch").read_bytes() if (adir / "final.patch").exists() else b""
     want = bindings(task, patch)
     if not force and is_current(read_json(out), want):

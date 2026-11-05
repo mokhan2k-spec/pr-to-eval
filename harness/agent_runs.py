@@ -286,7 +286,9 @@ def claude_allowed_tools(ws: Path | None = None, scope: str | None = None) -> li
         file_tools = [f"Read({root}/**)", f"Edit({root}/**)", f"Write({root}/**)"]
     else:
         file_tools = ["Read(./**)", "Edit(./**)", "Write(./**)"]
-    return file_tools + ["Glob", "Grep"] + CLAUDE_BASH_ALLOW
+    # bare Glob/Grep are NOT allowed: the probe measured them reading outside the workspace.
+    # Read(...) rules are applied best-effort to Grep/Glob, so the scoped Read rule confines them.
+    return file_tools + CLAUDE_BASH_ALLOW
 
 
 def build_command(agent: str, ws: Path, exe=None, scope: str | None = None,

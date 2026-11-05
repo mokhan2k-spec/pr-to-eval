@@ -8,5 +8,7 @@
   {"path_glob": "*", "pattern": "@example[.](com|org|net|invalid)", "reason": "reserved example domains"},
   {"path_glob": "harness/privacy_check.py", "pattern": "*", "reason": "the detector's own rule source"},
   {"path_glob": "tests/test_privacy_check.py", "pattern": "*", "reason": "tests build sample hits for the detector"},
-  {"path_glob": "privacy.json", "pattern": "*", "reason": "the allowlist describes the patterns"}
+  {"path_glob": "tests/test_audit.py", "pattern": "windows-user-path", "reason": "synthetic escape paths (user 'bob') fed to the auditor"},
+  {"path_glob": "tests/test_audit.py", "pattern": "unix-users-path", "reason": "synthetic escape paths (user 'bob') fed to the auditor"},
+  {"path_glob": "privacy.json","pattern": "*", "reason": "the allowlist describes the patterns"}
 ]

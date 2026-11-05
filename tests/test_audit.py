@@ -249,3 +249,10 @@ def test_commands_and_written_files_are_scanned():
 def test_auditor_digest_depends_on_leak_ids():
     assert audit.auditor_digest(["a"]) != audit.auditor_digest(["b"])
     assert audit.auditor_digest(["b", "a"]) == audit.auditor_digest(["a", "b"])
+
+
+def test_colon_plus_escaped_newline_is_not_a_drive_path():
+    code = "for subv in v:" + chr(92) + "n    self_insert(k, subv)" + chr(92) + "n    x = 1"
+    assert audit.audit_transcript(claude(tool("Bash", command="python - <<'E'\n" + code + "\nE")))["hits"] == []
+    real = "type " + "C:" + chr(92) + "new" + chr(92) + "x.txt"
+    assert audit.audit_transcript(claude(tool("Bash", command=real)))["hits"]

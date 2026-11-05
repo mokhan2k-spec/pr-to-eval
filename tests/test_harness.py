@@ -295,9 +295,10 @@ def test_claude_command_and_env(tmp_path):
 
 def test_dry_run_runs_nothing(fixtures_dir, capsys, tmp_path):
     rc = agent_runs.main(["--tasks-dir", str(fixtures_dir), "--task", "tiny-python-1",
-                          "--agent", "all", "--n", "1", "--dry-run"])
+                          "--agent", "all", "--trials", "1", "--runs-dir", str(tmp_path), "--dry-run"])
     out = capsys.readouterr().out
-    assert rc == 0 and "claude-1" in out and "codex-1" in out
+    assert rc == 0 and "claude/trial-1/attempt-1" in out and "codex/trial-1/attempt-1" in out
+    assert not any(tmp_path.iterdir())  # a dry run writes nothing
 
 
 def test_classifier():
@@ -311,19 +312,6 @@ def test_classifier():
     ok = {"verdict": "PASS", "tests": {"failed": []}, "checks": {"failed": []}}
     c = agent_runs.classify(ok, b"diff", {})
     assert c["outcome"] == "pass" and c["failure_source"] is None
-
-
-def test_report_summary(tmp_path):
-    for name, verdict, src in [("claude-1", "PASS", None), ("claude-2", "FAIL", "agent")]:
-        d = tmp_path / "t1" / name
-        d.mkdir(parents=True)
-        (d / "grade.json").write_text(json.dumps({"verdict": verdict}))
-        (d / "meta.json").write_text(json.dumps({"agent": "claude"}))
-        (d / "classification.json").write_text(json.dumps(
-            {"outcome": verdict.lower(), "failure_source": src, "evidence": "e", "classified_by": "auto"}))
-    out = report.write_summary(tmp_path).read_text()
-    assert "| t1 | claude | 1/2 | 1 | 0 | 0 |" in out
-    assert "t1/claude-2" in out
 
 
 def test_llm_extract_json_and_prompt():

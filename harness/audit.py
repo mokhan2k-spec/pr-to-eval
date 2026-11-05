@@ -25,7 +25,8 @@ FORBIDDEN = ["github.com", "pr-to-eval", "/pull/", "hidden_tests", "reference.pa
 TEXT_FIELDS = {"content", "new_string", "old_string", "text", "prompt", "description"}
 
 # Path-like tokens inside shell commands.
-_WIN = r"(?<![A-Za-z0-9])[A-Za-z]:[\\/][^\s\"'`<>|;,)]*"
+# `v:\n` is a code line ending in a colon plus an escaped newline/tab, not a drive path
+_WIN = r"(?<![A-Za-z0-9])[A-Za-z]:[\\/](?![nrt](?![A-Za-z0-9_]))[^\s\"'`<>|;,)]*"
 _UNC = r"\\\\[^\s\"'`<>|;,)]+"
 _UNIX = (r"(?<![\w.:/\\~$-])(?:/[^\s\"'`<>|;,)=/]+/[^\s\"'`<>|;,)=]*"
          r"|/(?:tmp|etc|home|root|var|usr|mnt|opt|proc|Users)(?![\w/.-]))")
