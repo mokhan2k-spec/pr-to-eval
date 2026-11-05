@@ -81,5 +81,10 @@
     "kind": "alt",
     "description": "independent Sonnet author (saw only upstream/ + TASK.md in a temp workspace outside this repo): list(v) before the emptiness check, in both OrderedMultiDict copies; converged on the upstream approach",
     "expect": "pass"
+  },
+  "alt-3": {
+    "kind": "alt",
+    "description": "independent Claude Sonnet via `agent_runs alt` with a constraint forbidding materialising the input before the emptiness check (runs/_alts/alt-3/boltons-458/claude/trial-1/attempt-1, audit clean): STRUCTURALLY DIFFERENT - single pass over the iterable, the key's value list is created lazily on the first item and each item appended, so an empty iterable never creates the key; no list(v) copy",
+    "expect": "pass"
   }
 }

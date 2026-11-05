@@ -1,0 +1,34 @@
+{
+  "clean": false,
+  "hits": [
+    {
+      "kind": "path",
+      "where": "line 11 Bash.command",
+      "text": "../error/TimeoutError.ts"
+    }
+  ],
+  "tool_calls": 9,
+  "review_required": [
+    {
+      "reason": "host-access-pattern",
+      "pattern": "parent-path",
+      "where": "patch src/promise/withTimeout.ts:1",
+      "text": "import { TimeoutError } from '../error/TimeoutError.ts';"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "parent-path",
+      "where": "line 11 Bash.command:4",
+      "text": "s=s.replace(\"import { timeout } from './timeout.ts';\",\"import { TimeoutError } from '../error/TimeoutError.ts';\")"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "parent-path",
+      "where": "line 17 Edit <WS>\\src\\promise\\withTimeout.ts:1",
+      "text": "import { TimeoutError } from '../error/TimeoutError.ts';"
+    }
+  ],
+  "auditor_digest": "caf07da168100c02bac4945a442659361e5c29410ba7395d2998bdb4f7de1a72",
+  "transcript_sha256": "009dcc663ee1e4a70fae3b795c2111079a4be74d9dd287e6118d1744f541a028",
+  "patch_sha256": "e3123eb0640f9678b3dce018cfb790237952296dd31ae7a1c2932b947457ff50"
+}

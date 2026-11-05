@@ -1,0 +1,9 @@
+{
+  "clean": true,
+  "hits": [],
+  "tool_calls": 10,
+  "review_required": [],
+  "auditor_digest": "d2ba2cfff5d7e8edb328dbf3b11828aac61481d6464463ad77ad1a2c3043fb4a",
+  "transcript_sha256": "7189dea739891430d66e1378af960900d7776a8929d1123453cbb9160aa77471",
+  "patch_sha256": "f09faaffba45e1facb4a212aebf657555779950304b49c53169139a37e0ee763"
+}

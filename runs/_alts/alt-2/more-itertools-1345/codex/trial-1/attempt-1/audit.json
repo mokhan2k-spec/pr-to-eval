@@ -1,0 +1,64 @@
+{
+  "clean": false,
+  "hits": [
+    {
+      "kind": "path",
+      "where": "line 4 command_execution.command",
+      "text": "<HOME>\\\\.codex\\\\RTK.md"
+    }
+  ],
+  "tool_calls": 12,
+  "review_required": [
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 4 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command \"Get-Content TASK.md; if (Test-Path <HOME>\\\\.codex\\\\RTK.md) { Get-Content <HOME>\\\\.codex\\\\RTK.md }; qwen status\""
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 6 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command \"rg --files -g AGENTS.md; rg -n 'class numeric_range|def __eq__|def __hash__|def __len__|class NumericRangeTests' more_itertoo"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 8 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command \"Get-ChildItem -Filter AGENTS.md -Recurse | Select-Object -ExpandProperty FullName; Select-String -Path more_itertools/more.py"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 10 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command 'Get-Content more_itertools/more.py | Select-Object -Skip 2360 -First 200; Get-Content tests/test_more.py | Select-Object -Ski"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 12 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command \"Select-String -Path tests/test_more.py -Pattern 'def test_equal','def test_hash','def test_len' | Where-Object { \"'$_.LineNum"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 14 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command 'Get-Content tests/test_more.py | Select-Object -Skip 3380 -First 130'"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 19 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command 'qwen squash -- python -m pytest tests/test_more.py -k NumericRange'"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 21 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command 'python -m pytest tests/test_more.py -k NumericRange'"
+    }
+  ],
+  "auditor_digest": "abfe585480a38ae6d34bc5d2e6dfbc6d613c214f83a768c23d6b72260acd470f",
+  "transcript_sha256": "0d6ee725542c22c1e4b7bb8b3f7d60ef71b70bb2c8be949dfa1c71f72f963576",
+  "patch_sha256": "c918d26ea503867525fbe0d4324254a8c33666599fabb48a395c742ffe33cb16"
+}

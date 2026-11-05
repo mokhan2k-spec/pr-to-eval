@@ -1,0 +1,11 @@
+{
+  "outcome": "pass",
+  "failure_source": null,
+  "evidence": "hidden tests and shell checks all passed, audit clean",
+  "classified_by": "auto",
+  "confirmed": true,
+  "confirmed_by": "auto",
+  "patch_sha256": "492c768842ee9c1a1f51ca174185b25d00ac72b78bf7f5e76ebda7d20417acb2",
+  "grade_sha256": "448e2da50d067c40831c55e2b7059185ca2c9a23429ae96d86160e0b4d41ab87",
+  "audit_sha256": "014f83e82f3ee9c3b68da4e79c06af41dac68a47cd1d095eaf132b9c1f5c7c26"
+}

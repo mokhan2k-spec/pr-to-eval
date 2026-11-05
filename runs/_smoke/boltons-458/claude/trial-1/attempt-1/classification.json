@@ -1,0 +1,12 @@
+{
+  "outcome": "pass",
+  "failure_source": null,
+  "evidence": "Original audit hit was the auditor false positive 'v:\\n' (code line ending in colon); auditor fixed, re-audit clean (audit-history.jsonl). Patch passes 212/212 plus 3/3 checks.",
+  "classified_by": "main-seat",
+  "confirmed": true,
+  "confirmed_by": "main-seat",
+  "confirmed_utc": "2026-11-05T22:14:21Z",
+  "patch_sha256": "f09faaffba45e1facb4a212aebf657555779950304b49c53169139a37e0ee763",
+  "grade_sha256": "a9d6cca90b0bedf1c2ce583e96845b7ccd8a1108f92ec6a3cce332602cc1e202",
+  "audit_sha256": "ba5553659554b2de12afeed1c336ea47384d5d384c34ce8f87f815a94ef4a976"
+}

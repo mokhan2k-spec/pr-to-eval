@@ -1,20 +1,46 @@
 {
-  "reference": {"kind": "reference", "description": "upstream PR #2170 (merge 7a185f9d4b0ddbef98b83955905a77e6004458d4)", "expect": "pass"},
-  "flawed-1": {"kind": "flawed", "description": "aborts the internal controller (clearing the timer and listener) only when run() resolves, not when it rejects or times out", "expect": "fail",
-               "expect_failing": [
-                 "hidden_tests/withTimeout.hidden.spec.ts::withTimeout cleanup (hidden) > leaves no pending timers after the operation rejects",
-                 "hidden_tests/withTimeout.hidden.spec.ts::withTimeout signal cleanup (hidden) > removes its abort listener from the signal after the operation rejects"
-               ]},
-  "flawed-2": {"kind": "flawed", "description": "clears the timer on every path but registers the external-signal abort listener without removing it, so it leaks on the caller's signal", "expect": "fail",
-               "expect_failing": [
-                 "hidden_tests/withTimeout.hidden.spec.ts::withTimeout signal cleanup (hidden) > removes its abort listener from the signal after the operation resolves",
-                 "hidden_tests/withTimeout.hidden.spec.ts::withTimeout signal cleanup (hidden) > removes its abort listener from the signal after the operation rejects",
-                 "hidden_tests/withTimeout.hidden.spec.ts::withTimeout signal cleanup (hidden) > does not accumulate listeners on a signal reused across calls"
-               ]},
-  "flawed-3": {"kind": "flawed", "description": "removes the timeout race entirely (awaits run() only), so a slow operation never rejects with TimeoutError", "expect": "fail",
-               "expect_failing": [
-                 "hidden_tests/withTimeout.hidden.spec.ts::withTimeout cleanup (hidden) > rejects with TimeoutError when the operation is slower than the limit, leaving no timers",
-                 "hidden_tests/withTimeout.visible.spec.ts::withTimeout > returns a reason if a response is received after the specified wait time",
-                 "hidden_tests/withTimeout.visible.spec.ts::withTimeout > times out when a non-aborted signal is provided"
-               ]}
+  "reference": {
+    "kind": "reference",
+    "description": "upstream PR #2170 (merge 7a185f9d4b0ddbef98b83955905a77e6004458d4)",
+    "expect": "pass"
+  },
+  "flawed-1": {
+    "kind": "flawed",
+    "description": "aborts the internal controller (clearing the timer and listener) only when run() resolves, not when it rejects or times out",
+    "expect": "fail",
+    "expect_failing": [
+      "hidden_tests/withTimeout.hidden.spec.ts::withTimeout cleanup (hidden) > leaves no pending timers after the operation rejects",
+      "hidden_tests/withTimeout.hidden.spec.ts::withTimeout signal cleanup (hidden) > removes its abort listener from the signal after the operation rejects"
+    ]
+  },
+  "flawed-2": {
+    "kind": "flawed",
+    "description": "clears the timer on every path but registers the external-signal abort listener without removing it, so it leaks on the caller's signal",
+    "expect": "fail",
+    "expect_failing": [
+      "hidden_tests/withTimeout.hidden.spec.ts::withTimeout signal cleanup (hidden) > removes its abort listener from the signal after the operation resolves",
+      "hidden_tests/withTimeout.hidden.spec.ts::withTimeout signal cleanup (hidden) > removes its abort listener from the signal after the operation rejects",
+      "hidden_tests/withTimeout.hidden.spec.ts::withTimeout signal cleanup (hidden) > does not accumulate listeners on a signal reused across calls"
+    ]
+  },
+  "flawed-3": {
+    "kind": "flawed",
+    "description": "removes the timeout race entirely (awaits run() only), so a slow operation never rejects with TimeoutError",
+    "expect": "fail",
+    "expect_failing": [
+      "hidden_tests/withTimeout.hidden.spec.ts::withTimeout cleanup (hidden) > rejects with TimeoutError when the operation is slower than the limit, leaving no timers",
+      "hidden_tests/withTimeout.visible.spec.ts::withTimeout > returns a reason if a response is received after the specified wait time",
+      "hidden_tests/withTimeout.visible.spec.ts::withTimeout > times out when a non-aborted signal is provided"
+    ]
+  },
+  "alt-1": {
+    "kind": "alt",
+    "description": "independent Claude Sonnet via `agent_runs alt` (runs/_alts/alt-1/es-toolkit-2170/claude/trial-1/attempt-1, audit clean): a combined AbortController forwarding the caller's signal, aborted in finally, with an explicit removeEventListener; converged on the upstream approach",
+    "expect": "pass"
+  },
+  "alt-3": {
+    "kind": "alt",
+    "description": "independent Claude Sonnet via `agent_runs alt` with a constraint forbidding AbortController and the timeout helper (runs/_alts/alt-3/es-toolkit-2170/claude/trial-1/attempt-1; one parent-path audit hit confirmed as the in-workspace import ../error/TimeoutError.ts): STRUCTURALLY DIFFERENT - hand-rolled setTimeout deadline promise rejecting with TimeoutError, an abort listener that clears the timer, an early return run() for an already-aborted signal, and clearTimeout + removeEventListener in finally",
+    "expect": "pass"
+  }
 }

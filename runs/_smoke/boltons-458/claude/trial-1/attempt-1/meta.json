@@ -1,0 +1,152 @@
+{
+  "task": "boltons-458",
+  "agent": "claude",
+  "trial": 1,
+  "attempt": 1,
+  "status": "complete",
+  "started_utc": "2026-11-05T22:13:04Z",
+  "timeout_s": 1200,
+  "requested_model": "sonnet",
+  "requested_effort": null,
+  "read_scope": "relative",
+  "known_context_leak": [],
+  "boundary": {
+    "statement": "Direct outside reads/network by tools: denied for Claude (path-scoped tools, Bash allowlist). Codex: network denied, reads detected. Code the agent runs: detected (leak check plus static scan), NOT prevented. A documented limitation.",
+    "probe": {
+      "read_file_tool": {
+        "id": "cdd0e0f0",
+        "result": "denied",
+        "evidence": "Read: Permission to use Read has been denied because Claude Code is running in don't ask mode. IMPORTANT: You *may* attempt to accomplish this action using other tools that might naturally be used to accomplish this goal, e.g. using head instead  [Permission to use Read has been denied because Claud"
+      },
+      "search_tool": {
+        "id": "0416aab3",
+        "result": "denied",
+        "evidence": "Grep: Permission to use Grep has been denied because Claude Code is running in don't ask mode. IMPORTANT: You *may* attempt to accomplish this action using other tools that might naturally be used to accomplish this goal, e.g. using head instead  [Permission to use Grep has been denied because Claud"
+      },
+      "read_shell": {
+        "id": "52374b48",
+        "result": "denied",
+        "evidence": "Bash: Permission to use Bash has been denied because Claude Code is running in don't ask mode. IMPORTANT: You *may* attempt to accomplish this action using other tools that might naturally be used to accomplish this goal, e.g. using head instead  [Permission to use Bash has been denied because Claud"
+      },
+      "net_urllib": {
+        "id": "879a1096",
+        "result": "denied",
+        "evidence": "Bash: Permission to use Bash has been denied because Claude Code is running in don't ask mode. IMPORTANT: You *may* attempt to accomplish this action using other tool"
+      },
+      "net_curl": {
+        "id": "a8812a81",
+        "result": "denied",
+        "evidence": "Bash: Permission to use Bash has been denied because Claude Code is running in don't ask mode. IMPORTANT: You *may* attempt to accomplish this action using other tool"
+      },
+      "write_in_ws": {
+        "id": "08529c31",
+        "result": "allowed",
+        "evidence": "hello-08529c31.txt exists (5 bytes)"
+      },
+      "runner_pytest_read": {
+        "id": "5fd95bfe",
+        "result": "allowed",
+        "evidence": "Bash: READ-5fd95bfe PR2E-CANARY-979329193993b9d7",
+        "known_limitation": "code the agent runs is detected (leak check plus static scan), NOT prevented"
+      },
+      "runner_pytest_net": {
+        "id": "d9616d47",
+        "result": "allowed",
+        "evidence": "Bash: received HTTP status 200: NET-d9616d47 200",
+        "http_status": 200,
+        "known_limitation": "code the agent runs is detected (leak check plus static scan), NOT prevented"
+      },
+      "runner_vitest_read": {
+        "id": "78909a95",
+        "result": "allowed",
+        "evidence": "Bash: READ-78909a95 PR2E-CANARY-156f1c38134fff7e",
+        "known_limitation": "code the agent runs is detected (leak check plus static scan), NOT prevented"
+      },
+      "runner_vitest_net": {
+        "id": "d68a60f4",
+        "result": "allowed",
+        "evidence": "Bash: received HTTP status 200: NET-d68a60f4 200",
+        "http_status": 200,
+        "known_limitation": "code the agent runs is detected (leak check plus static scan), NOT prevented"
+      },
+      "_runs": [
+        {
+          "scenario": "direct",
+          "exit_code": 0,
+          "timed_out": false
+        },
+        {
+          "scenario": "vitest",
+          "exit_code": 0,
+          "timed_out": false
+        }
+      ],
+      "_run": {
+        "read_scope": "relative",
+        "timed_out": false
+      }
+    }
+  },
+  "cli_version": "2.1.318 (Claude Code)",
+  "baseline_sha": "bc497dc55ec2824cc8e0869c381e3742af4c150e",
+  "env_keys": [
+    "APPDATA",
+    "CLAUDE_CODE_DISABLE_CLAUDE_MDS",
+    "COMPUTERNAME",
+    "COMSPEC",
+    "HOME",
+    "HOMEDRIVE",
+    "HOMEPATH",
+    "LOCALAPPDATA",
+    "NUMBER_OF_PROCESSORS",
+    "OS",
+    "PATH",
+    "PATHEXT",
+    "PROCESSOR_ARCHITECTURE",
+    "PROGRAMDATA",
+    "PROGRAMFILES",
+    "PROGRAMFILES(X86)",
+    "SYSTEMDRIVE",
+    "SYSTEMROOT",
+    "TEMP",
+    "TMP",
+    "USERNAME",
+    "USERPROFILE",
+    "WINDIR"
+  ],
+  "ended_utc": "2026-11-05T22:13:23Z",
+  "duration_s": 18.4,
+  "exit_code": 0,
+  "timed_out": false,
+  "observed_model": "claude-sonnet-5-5",
+  "argv": [
+    "claude.exe",
+    "-p",
+    "Read TASK.md in this directory and complete the task. Work only inside this directory. Run the existing tests if useful. When done, stop.",
+    "--model",
+    "sonnet",
+    "--setting-sources",
+    "project",
+    "--strict-mcp-config",
+    "--no-session-persistence",
+    "--permission-mode",
+    "dontAsk",
+    "--allowedTools",
+    "Read(./**)",
+    "Edit(./**)",
+    "Write(./**)",
+    "Bash(python -m pytest:*)",
+    "Bash(npx vitest:*)",
+    "Bash(npx tsc:*)",
+    "Bash(git diff:*)",
+    "Bash(git status:*)",
+    "Bash(git log:*)",
+    "--disallowedTools",
+    "WebFetch",
+    "WebSearch",
+    "Agent",
+    "--output-format",
+    "stream-json",
+    "--verbose"
+  ]
+}

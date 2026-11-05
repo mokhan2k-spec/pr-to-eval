@@ -1,0 +1,10 @@
+{
+  "outcome": "contaminated",
+  "failure_source": null,
+  "evidence": "audit not clean: path: <HOME>\\\\.codex\\\\RTK.md; path: \\\\(",
+  "classified_by": "auto",
+  "confirmed": false,
+  "patch_sha256": "1559640884eeb7365344743fc7deacd5196a7f02f83e797d83938b223206c4dc",
+  "grade_sha256": "9ca2965f0a7e63b61bc53f330fd1345b2b91fe7c4dca8f9d38d2ff8615eab947",
+  "audit_sha256": "bb16462d35653246d19ab0f963a07064091d314daa3b93e4a4aaa4a7704d2691"
+}

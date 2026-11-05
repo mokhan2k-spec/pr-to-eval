@@ -1,0 +1,24 @@
+{
+  "verdict": "PASS",
+  "tests": {
+    "total": 17,
+    "passed": 17,
+    "failed": [],
+    "skipped": [],
+    "missing": []
+  },
+  "checks": {
+    "total": 3,
+    "passed": 3,
+    "failed": []
+  },
+  "runner": {
+    "exit": 0,
+    "timed_out": false,
+    "junit_ok": true,
+    "diag_tail": "JUNIT report written to <HOME>/AppData/Local/Temp/pr-to-eval-junit-0jgly7e7/junit.xml\n"
+  },
+  "patch_sha256": "275548662550d05f79fc8857f84fb7ea39e30058c53604775dd728fe57433fc9",
+  "task_hash": "11c36ed2f4e6538d9199ff27e42b6f067c4765e4238c3e086813d5f7e2aa4c69",
+  "grader_digest": "8b16b58568feff741633a5ece1e9b1416cfb49f6b2e6e0d6cefd0da7d0367ea1"
+}

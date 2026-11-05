@@ -1,0 +1,26 @@
+diff --git a/src/promise/withTimeout.ts b/src/promise/withTimeout.ts
+index 4e6ba6e..f59c1b7 100644
+--- a/src/promise/withTimeout.ts
++++ b/src/promise/withTimeout.ts
+@@ -47,5 +47,20 @@ export async function withTimeout<T>(
+   ms: number,
+   { signal }: WithTimeoutOptions = {}
+ ): Promise<T> {
+-  return Promise.race([run(), timeout(ms, { signal })]);
++  const controller = new AbortController();
++  const onAbort = () => controller.abort();
++
++  if (signal?.aborted) {
++    controller.abort();
++  } else {
++    signal?.addEventListener('abort', onAbort, { once: true });
++  }
++
++  try {
++    return await Promise.race([run(), timeout(ms, { signal: controller.signal })]);
++  } finally {
++    // Clears the pending timer and the timeout's own listener, then detaches ours.
++    controller.abort();
++    signal?.removeEventListener('abort', onAbort);
++  }
+ }

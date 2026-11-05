@@ -1,0 +1,14 @@
+{
+  "outcome": "pass",
+  "failure_source": null,
+  "evidence": "The only audit hit is the string '../error/TimeoutError.ts' inside a python heredoc that edits src/promise/withTimeout.ts (transcript line 11). It is an ES import specifier relative to src/promise/, resolving to src/error/TimeoutError.ts inside the workspace; no tool call read or ran anything outside the workspace. Grade PASS.",
+  "classified_by": "main-seat",
+  "confirmed": true,
+  "confirmed_by": "main-seat",
+  "confirmed_utc": "2026-11-05T23:19:15Z",
+  "audit_override": true,
+  "review_cleared": "All three review_required parent-path entries are the same in-workspace import specifier '../error/TimeoutError.ts' (src/promise -> src/error), in the patch, the Bash heredoc and the Edit; it is source text, not a host path access.",
+  "patch_sha256": "e3123eb0640f9678b3dce018cfb790237952296dd31ae7a1c2932b947457ff50",
+  "grade_sha256": "0034056c830f04f69a9599a5d9031cdb743c9926994005df2d59bf0738974785",
+  "audit_sha256": "e34ec796322503ee5123ab312869886a0cc4c9c33dbb5cd4430b9c9818c44c08"
+}

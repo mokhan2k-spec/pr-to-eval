@@ -1,0 +1,167 @@
+{
+  "task": "es-toolkit-2170",
+  "agent": "claude",
+  "trial": 1,
+  "attempt": 1,
+  "status": "complete",
+  "started_utc": "2026-11-05T23:17:54Z",
+  "timeout_s": 1200,
+  "requested_model": "sonnet",
+  "requested_effort": null,
+  "read_scope": "relative",
+  "known_context_leak": [],
+  "boundary": {
+    "statement": "Direct outside reads/network by tools: denied for Claude (path-scoped tools, Bash allowlist). Codex: network denied, reads detected. Code the agent runs: detected (leak check plus static scan), NOT prevented. A documented limitation.",
+    "probe": {
+      "read_file_tool": {
+        "id": "7594c08a",
+        "result": "denied",
+        "evidence": "Read: Permission to use Read has been denied because Claude Code is running in don't ask mode. IMPORTANT: You *may* attempt to accomplish this action using other tools that might naturally be used to accomplish this goal, e.g. using head instead  [Permission to use Read has been denied because Claud"
+      },
+      "search_tool": {
+        "id": "c837540e",
+        "result": "denied",
+        "evidence": "Grep: Permission to use Grep has been denied because Claude Code is running in don't ask mode. IMPORTANT: You *may* attempt to accomplish this action using other tools that might naturally be used to accomplish this goal, e.g. using head instead  [Permission to use Grep has been denied because Claud"
+      },
+      "read_shell": {
+        "id": "8dd2366f",
+        "result": "denied",
+        "evidence": "Bash: Permission to use Bash has been denied because Claude Code is running in don't ask mode. IMPORTANT: You *may* attempt to accomplish this action using other tools that might naturally be used to accomplish this goal, e.g. using head instead  [Permission to use Bash has been denied because Claud"
+      },
+      "net_urllib": {
+        "id": "fe5cc52d",
+        "result": "denied",
+        "evidence": "Bash: Permission to use Bash has been denied because Claude Code is running in don't ask mode. IMPORTANT: You *may* attempt to accomplish this action using other tool"
+      },
+      "net_curl": {
+        "id": "72d001af",
+        "result": "denied",
+        "evidence": "Bash: Permission to use Bash has been denied because Claude Code is running in don't ask mode. IMPORTANT: You *may* attempt to accomplish this action using other tool"
+      },
+      "write_in_ws": {
+        "id": "82947e11",
+        "result": "allowed",
+        "evidence": "hello-82947e11.txt exists (6 bytes)"
+      },
+      "runner_pytest_read": {
+        "id": "5ac3e09c",
+        "result": "allowed",
+        "evidence": "Bash: READ-5ac3e09c PR2E-CANARY-c0c1c71714e99270",
+        "known_limitation": "code the agent runs is detected (leak check plus static scan), NOT prevented"
+      },
+      "runner_pytest_net": {
+        "id": "34682155",
+        "result": "allowed",
+        "evidence": "Bash: received HTTP status 200: NET-34682155 200",
+        "http_status": 200,
+        "known_limitation": "code the agent runs is detected (leak check plus static scan), NOT prevented"
+      },
+      "runner_vitest_read": {
+        "id": "ead7818f",
+        "result": "allowed",
+        "evidence": "Bash: READ-ead7818f PR2E-CANARY-b04bf47a1b8daa4c",
+        "known_limitation": "code the agent runs is detected (leak check plus static scan), NOT prevented"
+      },
+      "runner_vitest_net": {
+        "id": "240e599f",
+        "result": "allowed",
+        "evidence": "Bash: received HTTP status 200: NET-240e599f 200",
+        "http_status": 200,
+        "known_limitation": "code the agent runs is detected (leak check plus static scan), NOT prevented"
+      },
+      "_runs": [
+        {
+          "scenario": "direct",
+          "exit_code": 0,
+          "timed_out": false
+        },
+        {
+          "scenario": "pytest",
+          "exit_code": 0,
+          "timed_out": false
+        },
+        {
+          "scenario": "vitest",
+          "exit_code": 0,
+          "timed_out": false
+        }
+      ],
+      "_binding": {
+        "cli_version": "2.1.318 (Claude Code)",
+        "policy_digest": "a7891234b065d613e900bc8d4e8c576df03d6d046ecad12c0286c97f9a800bf4",
+        "probe_digest": "c3722bdb6f3cd22e6b33412738c3848480792a0db31c2d91d23dc168a8b840df",
+        "platform": "win32",
+        "read_scope": "relative"
+      },
+      "_run": {
+        "read_scope": "relative",
+        "timed_out": false
+      },
+      "_ok": true,
+      "_problems": []
+    }
+  },
+  "prompt": "Read TASK.md in this directory and complete the task. Work only inside this directory. Run the existing tests if useful. When done, stop. Constraint: Constraint for this solution: do NOT create an AbortController, do NOT use AbortSignal.any or AbortSignal.timeout, and do NOT call the library's `timeout` helper. Manage the deadline yourself with setTimeout/clearTimeout, and add and remove any listener on the caller's signal yourself.",
+  "cli_version": "2.1.318 (Claude Code)",
+  "baseline_sha": "1e8e19cd033c6c16f48e92b53026c589ff3260ed",
+  "env_keys": [
+    "APPDATA",
+    "CLAUDE_CODE_DISABLE_CLAUDE_MDS",
+    "COMPUTERNAME",
+    "COMSPEC",
+    "HOME",
+    "HOMEDRIVE",
+    "HOMEPATH",
+    "LOCALAPPDATA",
+    "NUMBER_OF_PROCESSORS",
+    "OS",
+    "PATH",
+    "PATHEXT",
+    "PROCESSOR_ARCHITECTURE",
+    "PROGRAMDATA",
+    "PROGRAMFILES",
+    "PROGRAMFILES(X86)",
+    "SYSTEMDRIVE",
+    "SYSTEMROOT",
+    "TEMP",
+    "TMP",
+    "USERNAME",
+    "USERPROFILE",
+    "WINDIR"
+  ],
+  "ended_utc": "2026-11-05T23:18:22Z",
+  "duration_s": 26.2,
+  "exit_code": 0,
+  "timed_out": false,
+  "observed_model": "claude-sonnet-5-5",
+  "argv": [
+    "claude.exe",
+    "-p",
+    "Read TASK.md in this directory and complete the task. Work only inside this directory. Run the existing tests if useful. When done, stop. Constraint: Constraint for this solution: do NOT create an AbortController, do NOT use AbortSignal.any or AbortSignal.timeout, and do NOT call the library's `timeout` helper. Manage the deadline yourself with setTimeout/clearTimeout, and add and remove any listener on the caller's signal yourself.",
+    "--model",
+    "sonnet",
+    "--setting-sources",
+    "project",
+    "--strict-mcp-config",
+    "--no-session-persistence",
+    "--permission-mode",
+    "dontAsk",
+    "--allowedTools",
+    "Read(./**)",
+    "Edit(./**)",
+    "Write(./**)",
+    "Bash(python -m pytest:*)",
+    "Bash(npx vitest:*)",
+    "Bash(npx tsc:*)",
+    "Bash(git diff:*)",
+    "Bash(git status:*)",
+    "Bash(git log:*)",
+    "--disallowedTools",
+    "WebFetch",
+    "WebSearch",
+    "Agent",
+    "--output-format",
+    "stream-json",
+    "--verbose"
+  ]
+}

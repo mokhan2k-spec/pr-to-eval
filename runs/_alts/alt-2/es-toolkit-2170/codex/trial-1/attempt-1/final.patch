@@ -1,0 +1,106 @@
+diff --git a/src/promise/withTimeout.spec.ts b/src/promise/withTimeout.spec.ts
+index c85448f..90229c6 100644
+--- a/src/promise/withTimeout.spec.ts
++++ b/src/promise/withTimeout.spec.ts
+@@ -1,8 +1,74 @@
+-import { describe, expect, it } from 'vitest';
++import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
++import { TimeoutError } from '../error/TimeoutError.ts';
+ import { delay } from './delay.ts';
+ import { withTimeout } from './withTimeout.ts';
+ 
+ describe('withTimeout', () => {
++  describe('cleanup', () => {
++    beforeEach(() => vi.useFakeTimers());
++    afterEach(() => {
++      vi.restoreAllMocks();
++      vi.useRealTimers();
++    });
++
++    it.each(['resolve', 'reject', 'timeout'] as const)('cleans up after %s', async outcome => {
++      const controller = new AbortController();
++      const add = vi.spyOn(controller.signal, 'addEventListener');
++      const remove = vi.spyOn(controller.signal, 'removeEventListener');
++      const value = { result: 'foo' };
++      const reason = new Error('operation failed');
++      const result = withTimeout(
++        () =>
++          outcome === 'resolve'
++            ? Promise.resolve(value)
++            : outcome === 'reject'
++              ? Promise.reject(reason)
++              : new Promise<never>(() => {}),
++        100,
++        { signal: controller.signal }
++      );
++      const assertion =
++        outcome === 'resolve'
++          ? expect(result).resolves.toBe(value)
++          : outcome === 'reject'
++            ? expect(result).rejects.toBe(reason)
++            : expect(result).rejects.toBeInstanceOf(TimeoutError);
++
++      if (outcome === 'timeout') {
++        await vi.advanceTimersByTimeAsync(100);
++      }
++      await assertion;
++
++      expect(vi.getTimerCount()).toBe(0);
++      expect(add).toHaveBeenCalledTimes(1);
++      expect(remove).toHaveBeenCalledWith('abort', add.mock.calls[0][1]);
++    });
++
++    it('clears the timer when no signal is provided', async () => {
++      await withTimeout(() => Promise.resolve('foo'), 100);
++      expect(vi.getTimerCount()).toBe(0);
++    });
++
++    it('awaits the operation without a deadline when the signal is already aborted', async () => {
++      const controller = new AbortController();
++      controller.abort();
++      const add = vi.spyOn(controller.signal, 'addEventListener');
++      const result = withTimeout(
++        async () => {
++          await delay(200);
++          return 'foo';
++        },
++        100,
++        { signal: controller.signal }
++      );
++
++      await vi.advanceTimersByTimeAsync(200);
++      await expect(result).resolves.toBe('foo');
++      expect(vi.getTimerCount()).toBe(0);
++      expect(add).not.toHaveBeenCalled();
++    });
++  });
++
+   it('returns the result value if a response is received before the specified wait time', async () => {
+     const result = await withTimeout(async () => {
+       await delay(50);
+diff --git a/src/promise/withTimeout.ts b/src/promise/withTimeout.ts
+index 4e6ba6e..3393d9d 100644
+--- a/src/promise/withTimeout.ts
++++ b/src/promise/withTimeout.ts
+@@ -47,5 +47,20 @@ export async function withTimeout<T>(
+   ms: number,
+   { signal }: WithTimeoutOptions = {}
+ ): Promise<T> {
+-  return Promise.race([run(), timeout(ms, { signal })]);
++  const promise = run();
++  const controller = new AbortController();
++  const abortHandler = () => controller.abort();
++
++  if (signal?.aborted) {
++    controller.abort();
++  } else {
++    signal?.addEventListener('abort', abortHandler, { once: true });
++  }
++
++  try {
++    return await Promise.race([promise, timeout(ms, { signal: controller.signal })]);
++  } finally {
++    controller.abort();
++    signal?.removeEventListener('abort', abortHandler);
++  }
+ }

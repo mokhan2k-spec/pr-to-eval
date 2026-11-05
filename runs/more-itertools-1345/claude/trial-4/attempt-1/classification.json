@@ -1,0 +1,13 @@
+{
+  "outcome": "pass",
+  "failure_source": null,
+  "evidence": "Both audit 'path' hits ('/self._len/', '/other._len/') are the replacement halves of a sed substitution (s/len(self)/self._len/) on more_itertools/more.py inside the workspace; the slashes are sed delimiters, not a host path. No tool call touched anything outside the workspace. Grade PASS.",
+  "classified_by": "main-seat",
+  "confirmed": true,
+  "confirmed_by": "main-seat",
+  "confirmed_utc": "2026-11-05T23:23:42Z",
+  "audit_override": true,
+  "patch_sha256": "492c768842ee9c1a1f51ca174185b25d00ac72b78bf7f5e76ebda7d20417acb2",
+  "grade_sha256": "a80b86c97ce004a8808949214452130a2e6dcac287707a36088fb692d1cfe9bc",
+  "audit_sha256": "79c4b16c2c74313b9e585106cc9b82499181dba5396f871a2ef4fd2a75b41b07"
+}

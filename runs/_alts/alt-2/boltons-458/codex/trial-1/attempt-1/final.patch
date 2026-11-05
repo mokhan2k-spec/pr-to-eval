@@ -1,0 +1,115 @@
+diff --git a/boltons/dictutils.py b/boltons/dictutils.py
+index 12c58de..4f45c82 100644
+--- a/boltons/dictutils.py
++++ b/boltons/dictutils.py
+@@ -225,13 +225,9 @@ class OrderedMultiDict(dict):
+         Called ``addlist`` for consistency with :meth:`getlist`, but
+         tuples and other sequences and iterables work.
+         """
+-        if not v:
+-            return
+-        self_insert = self._insert
+-        values = super().setdefault(k, [])
++        self_add = self.add
+         for subv in v:
+-            self_insert(k, subv)
+-        values.extend(v)
++            self_add(k, subv)
+ 
+     def get(self, k, default=None):
+         """Return the value for key *k* if present in the dictionary, else
+diff --git a/boltons/urlutils.py b/boltons/urlutils.py
+index 712e5a1..d4d414a 100644
+--- a/boltons/urlutils.py
++++ b/boltons/urlutils.py
+@@ -1123,13 +1123,9 @@ class OrderedMultiDict(dict):
+         Called ``addlist`` for consistency with :meth:`getlist`, but
+         tuples and other sequences and iterables work.
+         """
+-        if not v:
+-            return
+-        self_insert = self._insert
+-        values = super().setdefault(k, [])
++        self_add = self.add
+         for subv in v:
+-            self_insert(k, subv)
+-        values.extend(v)
++            self_add(k, subv)
+ 
+     def get(self, k, default=None):
+         """Return the value for key *k* if present in the dictionary, else
+diff --git a/tests/test_addlist_iterables.py b/tests/test_addlist_iterables.py
+new file mode 100644
+index 0000000..a7749ea
+--- /dev/null
++++ b/tests/test_addlist_iterables.py
+@@ -0,0 +1,69 @@
++import runpy
++
++import pytest
++
++from boltons.dictutils import OrderedMultiDict
++from boltons import urlutils
++
++
++@pytest.fixture(scope='module', params=['dictutils', 'urlutils_standalone'])
++def omd_class(request):
++    if request.param == 'dictutils':
++        return OrderedMultiDict
++    # Loading outside the package exercises urlutils' embedded fallback.
++    return runpy.run_path(urlutils.__file__)['OrderedMultiDict']
++
++
++@pytest.mark.parametrize('make_values', [list, tuple, range, iter,
++                                       lambda v: (x for x in v)])
++def test_addlist_iterables(omd_class, make_values):
++    # range takes a stop value, while the other factories take an iterable.
++    values = make_values(3 if make_values is range else [0, 1, 2])
++    omd = omd_class()
++    omd.add('a', -2)
++    omd.addlist('a', [-1])
++    omd.add('b', 9)
++    omd.addlist('a', values)
++
++    assert omd.getlist('a') == [-2, -1, 0, 1, 2]
++    assert omd.get('a') == omd['a'] == 2
++    assert omd.items(multi=True) == [('a', -2), ('a', -1), ('b', 9),
++                                     ('a', 0), ('a', 1), ('a', 2)]
++    assert omd.todict(multi=True) == {'a': [-2, -1, 0, 1, 2], 'b': [9]}
++    assert omd.poplast('a') == 2
++    assert omd.getlist('a') == [-2, -1, 0, 1]
++
++
++def test_addlist_streams_values(omd_class):
++    omd = omd_class()
++
++    def values():
++        yield 1
++        assert omd.getlist('a') == [1]
++        assert omd.items(multi=True) == [('a', 1)]
++        yield 2
++
++    omd.addlist('a', values())
++    assert omd.getlist('a') == [1, 2]
++
++
++@pytest.mark.parametrize('make_empty', [list, tuple, lambda: range(0),
++                                      lambda: iter(()),
++                                      lambda: (x for x in ())])
++def test_addlist_empty_iterables(omd_class, make_empty):
++    omd = omd_class([('a', 1)])
++    omd.addlist('missing', make_empty())
++    omd.addlist('a', make_empty())
++    assert 'missing' not in omd
++    assert len(omd) == 1
++    assert omd.getlist('a') == [1]
++    assert omd.items(multi=True) == [('a', 1)]
++
++
++def test_url_query_addlist_generator():
++    url = urlutils.URL('https://example.com/?a=old&b=other')
++    url.query_params.addlist('a', (str(i) for i in range(2)))
++    url.query_params.addlist('missing', iter(()))
++    assert url.query_params.getlist('a') == ['old', '0', '1']
++    assert url.query_params.get('a') == '1'
++    assert url.to_text() == 'https://example.com/?a=old&b=other&a=0&a=1'

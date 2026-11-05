@@ -1,0 +1,82 @@
+{
+  "clean": false,
+  "hits": [
+    {
+      "kind": "path",
+      "where": "line 4 command_execution.command",
+      "text": "<HOME>\\\\.codex\\\\RTK.md"
+    }
+  ],
+  "tool_calls": 16,
+  "review_required": [
+    {
+      "reason": "host-access-pattern",
+      "pattern": "parent-path",
+      "where": "patch src/promise/withTimeout.spec.ts:2",
+      "text": "import { TimeoutError } from '../error/TimeoutError.ts';"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 4 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command \"Get-Content TASK.md; if (Test-Path AGENTS.md) { Get-Content AGENTS.md }; if (Test-Path <HOME>\\\\.codex\\\\RTK.md) { Get-Content "
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 6 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command 'Get-Content src/promise/withTimeout.ts; Get-Content src/promise/withTimeout.spec.ts; Get-Content package.json'"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 8 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command \"Get-Content src/promise/timeout.ts; Get-Content src/promise/delay.ts; rg --files -g '*TimeoutError*' -g '*json' -g '*vitest*'"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 11 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command 'qwen code --task \"Draft a small fix for withTimeout: call run first, create a private AbortController, forward the caller sig"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 12 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command 'Get-ChildItem node_modules/.bin -Name; Get-Content src/error/TimeoutError.ts; Get-Content src/promise/timeout.spec.ts'"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 16 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command 'qwen squash -- node node_modules/vitest/vitest.mjs run src/promise/withTimeout.spec.ts'"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 18 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command 'node node_modules/vitest/vitest.mjs run src/promise/withTimeout.spec.ts'"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 23 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command 'node node_modules/vitest/vitest.mjs run src/promise/withTimeout.spec.ts'"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 25 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command 'Get-ChildItem src/promise -Filter *.spec.ts -Name; git diff --stat; git status --short'"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 28 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command 'git diff --check; node node_modules/typescript/bin/tsc --noEmit --target es2022 --module esnext --moduleResolution bundler --"
+    }
+  ],
+  "auditor_digest": "caf07da168100c02bac4945a442659361e5c29410ba7395d2998bdb4f7de1a72",
+  "transcript_sha256": "b723b706f5979f458562d303742c2e681f6d470dfbb3f89a4f03f9e6e9778a0c",
+  "patch_sha256": "275548662550d05f79fc8857f84fb7ea39e30058c53604775dd728fe57433fc9"
+}

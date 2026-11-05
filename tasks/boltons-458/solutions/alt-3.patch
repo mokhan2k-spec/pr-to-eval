@@ -1,0 +1,44 @@
+diff --git a/boltons/dictutils.py b/boltons/dictutils.py
+index 12c58de..85db90d 100644
+--- a/boltons/dictutils.py
++++ b/boltons/dictutils.py
+@@ -225,13 +225,13 @@ class OrderedMultiDict(dict):
+         Called ``addlist`` for consistency with :meth:`getlist`, but
+         tuples and other sequences and iterables work.
+         """
+-        if not v:
+-            return
+         self_insert = self._insert
+-        values = super().setdefault(k, [])
++        values = None
+         for subv in v:
++            if values is None:
++                values = super().setdefault(k, [])
+             self_insert(k, subv)
+-        values.extend(v)
++            values.append(subv)
+ 
+     def get(self, k, default=None):
+         """Return the value for key *k* if present in the dictionary, else
+diff --git a/boltons/urlutils.py b/boltons/urlutils.py
+index 712e5a1..948b1b6 100644
+--- a/boltons/urlutils.py
++++ b/boltons/urlutils.py
+@@ -1123,13 +1123,13 @@ class OrderedMultiDict(dict):
+         Called ``addlist`` for consistency with :meth:`getlist`, but
+         tuples and other sequences and iterables work.
+         """
+-        if not v:
+-            return
+         self_insert = self._insert
+-        values = super().setdefault(k, [])
++        values = None
+         for subv in v:
++            if values is None:
++                values = super().setdefault(k, [])
+             self_insert(k, subv)
+-        values.extend(v)
++            values.append(subv)
+ 
+     def get(self, k, default=None):
+         """Return the value for key *k* if present in the dictionary, else

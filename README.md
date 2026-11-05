@@ -19,6 +19,29 @@ Needs Python 3.11+, Node 22, git and bash. `make verify-upstream` (vendored file
 Every solution of every task is graded by the hidden tests and shell checks, with no LLM in the verdict. The reference and the independent alternative must pass; each flawed solution must fail for its stated reason.
 
 <!-- validation-table:start -->
+| Task | Lang | Upstream PR | Solution | Kind | Hidden tests | Shell checks | LLM grader (recorded) | Verdict | Expected | Match |
+|---|---|---|---|---|---|---|---|---|---|---|
+| boltons-458 | python | [#458](https://github.com/mahmoud/boltons/pull/458) | reference | reference | 212/212 | 3/3 | — | PASS | PASS | yes |
+| boltons-458 | python | [#458](https://github.com/mahmoud/boltons/pull/458) | alt-1 | alt | 212/212 | 3/3 | — | PASS | PASS | yes |
+| boltons-458 | python | [#458](https://github.com/mahmoud/boltons/pull/458) | alt-3 | alt | 212/212 | 3/3 | — | PASS | PASS | yes |
+| boltons-458 | python | [#458](https://github.com/mahmoud/boltons/pull/458) | flawed-1 | flawed | 196/212 | 3/3 | — | FAIL | FAIL | yes |
+| boltons-458 | python | [#458](https://github.com/mahmoud/boltons/pull/458) | flawed-2 | flawed | 205/212 | 3/3 | — | FAIL | FAIL | yes |
+| boltons-458 | python | [#458](https://github.com/mahmoud/boltons/pull/458) | flawed-3 | flawed | 183/212 | 3/3 | — | FAIL | FAIL | yes |
+| es-toolkit-2170 | typescript | [#2170](https://github.com/toss/es-toolkit/pull/2170) | reference | reference | 17/17 | 3/3 | — | PASS | PASS | yes |
+| es-toolkit-2170 | typescript | [#2170](https://github.com/toss/es-toolkit/pull/2170) | alt-1 | alt | 17/17 | 3/3 | — | PASS | PASS | yes |
+| es-toolkit-2170 | typescript | [#2170](https://github.com/toss/es-toolkit/pull/2170) | alt-3 | alt | 17/17 | 3/3 | — | PASS | PASS | yes |
+| es-toolkit-2170 | typescript | [#2170](https://github.com/toss/es-toolkit/pull/2170) | flawed-1 | flawed | 14/17 | 3/3 | — | FAIL | FAIL | yes |
+| es-toolkit-2170 | typescript | [#2170](https://github.com/toss/es-toolkit/pull/2170) | flawed-2 | flawed | 13/17 | 3/3 | — | FAIL | FAIL | yes |
+| es-toolkit-2170 | typescript | [#2170](https://github.com/toss/es-toolkit/pull/2170) | flawed-3 | flawed | 13/17 | 3/3 | — | FAIL | FAIL | yes |
+| more-itertools-1345 | python | [#1345](https://github.com/more-itertools/more-itertools/pull/1345) | reference | reference | 42/42 | 3/3 | — | PASS | PASS | yes |
+| more-itertools-1345 | python | [#1345](https://github.com/more-itertools/more-itertools/pull/1345) | alt-1 | alt | 42/42 | 3/3 | — | PASS | PASS | yes |
+| more-itertools-1345 | python | [#1345](https://github.com/more-itertools/more-itertools/pull/1345) | alt-3 | alt | 42/42 | 3/3 | — | PASS | PASS | yes |
+| more-itertools-1345 | python | [#1345](https://github.com/more-itertools/more-itertools/pull/1345) | flawed-1 | flawed | 34/42 | 3/3 | — | FAIL | FAIL | yes |
+| more-itertools-1345 | python | [#1345](https://github.com/more-itertools/more-itertools/pull/1345) | flawed-2 | flawed | 35/42 | 3/3 | — | FAIL | FAIL | yes |
+| more-itertools-1345 | python | [#1345](https://github.com/more-itertools/more-itertools/pull/1345) | flawed-3 | flawed | 38/42 | 3/3 | — | FAIL | FAIL | yes |
+| more-itertools-1345 | python | [#1345](https://github.com/more-itertools/more-itertools/pull/1345) | flawed-4 | flawed | 36/42 | 2/3 | — | FAIL | FAIL | yes |
+
+**19/19 solutions match their expected verdict.**
 <!-- validation-table:end -->
 
 Mutation testing: small mistakes are injected into the reference solution and the hidden tests must catch them. Survivors must be listed in the task's `equivalent_mutants.json` with a reason.
