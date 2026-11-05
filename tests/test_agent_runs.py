@@ -659,3 +659,37 @@ def test_policy_digest_is_pinned_to_the_run_platform(monkeypatch):
     assert win != lin  # codex adds windows.sandbox on Windows
     monkeypatch.setattr(agent_runs.sys, "platform", "linux")
     assert agent_runs.policy_digest("codex", "win32") == win
+
+
+# --- alts go through the same enforced command and gate ----------------------------------
+
+def alt_argv(env, launcher, *extra):
+    return ["alt", "--tasks-dir", str(env["tasks_dir"]), "--runs-dir", str(env["runs"]),
+            "--task", "tiny-python-1", "--agent", "claude", "--label", "alt-2",
+            "--exe", "claude=" + str(launcher), *extra]
+
+
+def test_alt_refuses_without_a_good_probe(env, capsys):
+    assert agent_runs.main(alt_argv(env, fake_launcher(env))) == 2
+    assert "boundary probe missing" in capsys.readouterr().err
+    assert not (env["runs"] / "_alts").exists()
+
+
+def test_alt_runs_into_alts_with_the_constraint_recorded(env, capsys):
+    install_probe(env)
+    rc = agent_runs.main(alt_argv(env, fake_launcher(env), "--constraint", "Do not call list(v)."))
+    out = capsys.readouterr().out
+    adir = env["runs"] / "_alts" / "alt-2" / "tiny-python-1" / "claude" / "trial-1" / "attempt-1"
+    meta = json.loads((adir / "meta.json").read_text(encoding="utf-8"))
+    assert rc == 0 and "alt-2" in out and "PASS" in out
+    assert meta["prompt"] == agent_runs.PROMPT + " Constraint: Do not call list(v)."
+    assert meta["boundary"]["probe"]["_binding"]["policy_digest"] == agent_runs.policy_digest("claude")
+    assert attempt_dirs(env) == []              # never lands in the scored layout
+    agent_runs.main(alt_argv(env, fake_launcher(env)))
+    assert (adir.parent / "attempt-2").is_dir()  # every alt attempt is kept
+
+
+def test_alt_label_must_be_alt_n(env, capsys):
+    install_probe(env)
+    assert agent_runs.main(alt_argv(env, fake_launcher(env))[:-4] + ["--label", "reference",
+                           "--exe", "claude=x"]) == 1

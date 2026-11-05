@@ -647,7 +647,8 @@ def _finalise_incomplete(adir: Path, meta: dict, exc: BaseException, ws: Path | 
 
 
 def run_attempt(task: Task, agent: str, trial: int, attempt: int, runs_dir: Path,
-                timeout: int = DEFAULT_TIMEOUT, exe=None, keep_ws: bool = False) -> dict:
+                timeout: int = DEFAULT_TIMEOUT, exe=None, keep_ws: bool = False,
+                prompt: str | None = None, probe_runs_dir: Path | None = None) -> dict:
     """Run one agent attempt end to end into runs/<task>/<agent>/trial-<n>/attempt-<m>/.
 
     The attempt directory is created exclusively and meta.json (status=started) is written
@@ -669,7 +670,9 @@ def run_attempt(task: Task, agent: str, trial: int, attempt: int, runs_dir: Path
             "read_scope": READ_SCOPE if agent == "claude" else None,
             "known_context_leak": CODEX_LEAKS if agent == "codex" else [],
             "boundary": {"statement": BOUNDARY_STATEMENT,
-                         "probe": boundary_summary(runs_dir, agent)}}
+                         "probe": boundary_summary(probe_runs_dir or runs_dir, agent)}}
+    if prompt is not None and prompt != PROMPT:
+        meta["prompt"] = prompt                    # alts: the standard prompt plus a constraint
     write_json(adir / "meta.json", meta)
 
     ws = raw = baseline = None
@@ -680,7 +683,7 @@ def run_attempt(task: Task, agent: str, trial: int, attempt: int, runs_dir: Path
         raw.mkdir(parents=True, exist_ok=True)
         red = Redactor(ws=ws)
         exe_list = exe if exe is not None else resolve_exe(agent)
-        cmd = build_command(agent, ws, exe_list)
+        cmd = build_command(agent, ws, exe_list, prompt=prompt)
         started = time.time()
         meta.update(cli_version=cli_version(agent, exe_list if exe is not None else None),
                     baseline_sha=baseline, env_keys=sorted(agent_env(agent)))
@@ -948,6 +951,51 @@ def cmd_confirm(args) -> int:
     return 0
 
 
+ALTS_DIR = "_alts"
+ALT_LABEL_RE = re.compile(r"^alt-\d+$")
+
+
+def alt_prompt(constraint: str | None) -> str:
+    return PROMPT if not constraint else PROMPT + " Constraint: " + constraint.strip()
+
+
+def cmd_alt(args) -> int:
+    """Commission an alternative solution through the SAME enforced command, probe gate,
+    workspace, audit and grading as the scored runs. Evidence goes to
+    runs/_alts/<label>/<task>/<agent>/trial-1/attempt-<m>/ (outside report.py's scored glob).
+    Every attempt is kept; a PASSing final.patch is then copied into the task's solutions/."""
+    if not ALT_LABEL_RE.match(args.label):
+        print(f"error: --label must look like alt-2, got {args.label!r}", file=sys.stderr)
+        return 1
+    try:
+        (task,) = load_tasks(Path(args.tasks_dir), args.task)
+        exes = parse_exe(args.exe)
+    except (TaskError, ValueError) as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 1
+    constraint = args.constraint
+    if args.constraint_file:
+        constraint = Path(args.constraint_file).read_text(encoding="utf-8")
+    runs_dir = Path(args.runs_dir)
+    _, probs = probe_gate(runs_dir, args.agent, exes.get(args.agent))
+    if probs:
+        for p in probs:
+            print(f"error: {p}", file=sys.stderr)
+        print("alt not launched: the boundary probe must pass for this agent", file=sys.stderr)
+        return 2
+    alt_root = runs_dir / ALTS_DIR / args.label
+    done = list_attempts(trial_dir(alt_root, task.id, args.agent, 1))
+    m = (done[-1][0] + 1) if done else 1
+    r = run_attempt(task, args.agent, 1, m, alt_root, args.timeout, exes.get(args.agent),
+                    prompt=alt_prompt(constraint), probe_runs_dir=runs_dir)
+    if r["status"] != "complete":
+        print(f"{r['label']}: INCOMPLETE ({r['error']}); evidence kept in {r['dir']}", file=sys.stderr)
+        return 1
+    print(f"{args.label} {r['label']}: {r['verdict']} "
+          f"({r['classification']['outcome']}); patch: {r['dir'] / 'final.patch'}")
+    return 0 if r["verdict"] == "PASS" else 3
+
+
 def parse_exe(items: list[str] | None) -> dict:
     out = {}
     for item in items or []:
@@ -987,6 +1035,20 @@ def main(argv=None) -> int:
         ap.add_argument("--tasks-dir", default=str(TASKS_DIR))
         ap.add_argument("--runs-dir", default=str(RUNS_DIR))
         return cmd_regrade(ap.parse_args(argv[1:]))
+    if argv and argv[0] == "alt":
+        ap = argparse.ArgumentParser(prog="harness.agent_runs alt",
+                                     description="commission an alt solution via the enforced command")
+        ap.add_argument("--task", required=True)
+        ap.add_argument("--agent", choices=AGENTS, required=True)
+        ap.add_argument("--label", required=True, help="solution name, e.g. alt-2")
+        ap.add_argument("--constraint", help="appended to the standard prompt, e.g. to forbid "
+                        "the upstream approach")
+        ap.add_argument("--constraint-file")
+        ap.add_argument("--timeout", type=int, default=DEFAULT_TIMEOUT)
+        ap.add_argument("--exe", action="append")
+        ap.add_argument("--tasks-dir", default=str(TASKS_DIR))
+        ap.add_argument("--runs-dir", default=str(RUNS_DIR))
+        return cmd_alt(ap.parse_args(argv[1:]))
 
     ap = argparse.ArgumentParser(prog="harness.agent_runs")
     ap.add_argument("--task")
