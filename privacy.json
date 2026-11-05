@@ -10,5 +10,6 @@
   {"path_glob": "tests/test_privacy_check.py", "pattern": "*", "reason": "tests build sample hits for the detector"},
   {"path_glob": "tests/test_audit.py", "pattern": "windows-user-path", "reason": "synthetic escape paths (user 'bob') fed to the auditor"},
   {"path_glob": "tests/test_audit.py", "pattern": "unix-users-path", "reason": "synthetic escape paths (user 'bob') fed to the auditor"},
+  {"path_glob": "git-log", "pattern": "^Author: Muhammed Khan <225927073[+]mokhan2k-spec@users[.]noreply[.]github[.]com>$", "reason": "the repo owner's own commit identity: GitHub no-reply address of the account that hosts the repo (github.com/mokhan2k-spec), so the handle is public by construction; exact line only"},
   {"path_glob": "privacy.json","pattern": "*", "reason": "the allowlist describes the patterns"}
 ]
