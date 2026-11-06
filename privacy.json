@@ -134,5 +134,25 @@
     "rule": "email",
     "pattern": "^[+]@pytest[.][a-z_.]+$",
     "reason": "a pytest decorator on an added diff line (plus sign then the decorator), not an address"
+  },
+  {
+    "path_glob": "README.md",
+    "mode": "exact_line",
+    "rule": [
+      "employer-1",
+      "employer-2"
+    ],
+    "pattern": "^\\[!\\[validate\\]\\(https://github\\.com/mokhan2k-spec/pr\\-to\\-eval/actions/workflows/validate\\.yml/badge\\.svg\\?branch=main\\)\\]\\(https://github\\.com/mokhan2k-spec/pr\\-to\\-eval/actions/workflows/validate\\.yml\\)$",
+    "reason": "the README's own CI status badge (validate): its URL is this repo's address (github.com/mokhan2k-spec/pr-to-eval), public by construction like the no-reply author line; exact line only"
+  },
+  {
+    "path_glob": "README.md",
+    "mode": "exact_line",
+    "rule": [
+      "employer-1",
+      "employer-2"
+    ],
+    "pattern": "^\\[!\\[mutation\\]\\(https://github\\.com/mokhan2k-spec/pr\\-to\\-eval/actions/workflows/mutation\\.yml/badge\\.svg\\?branch=main\\)\\]\\(https://github\\.com/mokhan2k-spec/pr\\-to\\-eval/actions/workflows/mutation\\.yml\\)$",
+    "reason": "the README's own CI status badge (mutation): its URL is this repo's address (github.com/mokhan2k-spec/pr-to-eval), public by construction like the no-reply author line; exact line only"
   }
 ]
