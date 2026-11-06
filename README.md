@@ -1,5 +1,8 @@
 # pr-to-eval
 
+[![validate](https://github.com/mokhan2k-spec/pr-to-eval/actions/workflows/validate.yml/badge.svg?branch=main)](https://github.com/mokhan2k-spec/pr-to-eval/actions/workflows/validate.yml)
+[![mutation](https://github.com/mokhan2k-spec/pr-to-eval/actions/workflows/mutation.yml/badge.svg?branch=main)](https://github.com/mokhan2k-spec/pr-to-eval/actions/workflows/mutation.yml)
+
 pr-to-eval turns real merged pull requests from public repos into agent-coding eval tasks. It then shows the graders are sound: they accept the upstream fix and an independently written correct fix, and they reject deliberately flawed fixes for the stated reason. The same graders score repeated Claude Code and Codex runs, and every failure is classified as agent, environment or grader. The build contract is in [DESIGN.md](DESIGN.md).
 
 ## How to reproduce
