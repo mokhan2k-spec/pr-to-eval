@@ -102,7 +102,8 @@
       "username",
       "employer-1",
       "employer-2",
-      "email"
+      "email",
+      "mail-handle"
     ],
     "pattern": "^Author: Muhammed Khan <225927073[+]mokhan2k-spec@users[.]noreply[.]github[.]com>$",
     "reason": "the repo owner's own commit identity: GitHub no-reply address of the account that hosts the repo (github.com/mokhan2k-spec), so the handle is public by construction; exact line only"
@@ -140,7 +141,8 @@
     "mode": "exact_line",
     "rule": [
       "employer-1",
-      "employer-2"
+      "employer-2",
+      "mail-handle"
     ],
     "pattern": "^\\[!\\[validate\\]\\(https://github\\.com/mokhan2k-spec/pr\\-to\\-eval/actions/workflows/validate\\.yml/badge\\.svg\\?branch=main\\)\\]\\(https://github\\.com/mokhan2k-spec/pr\\-to\\-eval/actions/workflows/validate\\.yml\\)$",
     "reason": "the README's own CI status badge (validate): its URL is this repo's address (github.com/mokhan2k-spec/pr-to-eval), public by construction like the no-reply author line; exact line only"
@@ -150,9 +152,16 @@
     "mode": "exact_line",
     "rule": [
       "employer-1",
-      "employer-2"
+      "employer-2",
+      "mail-handle"
     ],
     "pattern": "^\\[!\\[mutation\\]\\(https://github\\.com/mokhan2k-spec/pr\\-to\\-eval/actions/workflows/mutation\\.yml/badge\\.svg\\?branch=main\\)\\]\\(https://github\\.com/mokhan2k-spec/pr\\-to\\-eval/actions/workflows/mutation\\.yml\\)$",
     "reason": "the README's own CI status badge (mutation): its URL is this repo's address (github.com/mokhan2k-spec/pr-to-eval), public by construction like the no-reply author line; exact line only"
+  },
+  {
+    "path_glob": "privacy.json",
+    "rule": "mail-handle",
+    "pattern": "^mokhan$",
+    "reason": "the allowlist entries above name the hosting account's public login (github.com/mokhan2k-spec)"
   }
 ]
