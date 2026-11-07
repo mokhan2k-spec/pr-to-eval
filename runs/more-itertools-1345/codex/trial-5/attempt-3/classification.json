@@ -1,0 +1,14 @@
+{
+  "outcome": "pass",
+  "failure_source": null,
+  "evidence": "grade.json verdict PASS: tests 42/42 passed, checks 3/3, runner exit 0; meta codex_home=isolated (CODEX_HOME=C:\\codex-clean), run with --jobs 1 after the attempt-2 environment failure. Audit path hits '\\more.py' / '\\test_more.py' are the workspace-relative paths `more_itertools\\more.py` and `tests\\test_more.py` written with a backslash in Select-String/Get-Content commands. Not host paths. False positive.",
+  "classified_by": "main-seat",
+  "confirmed": true,
+  "confirmed_by": "main-seat",
+  "confirmed_utc": "2026-11-07T22:31:11Z",
+  "audit_override": true,
+  "review_cleared": "Every review_required entry is the powershell.exe wrapper Codex puts around each command. The commands inside are all workspace-relative: Get-Content TASK.md, rg/Select-String/Get-Content on more_itertools/more.py and tests/test_more.py, pytest -k NumericRange, git diff. A scan of every command found no drive letter, `..`, `~`, $env, \\Users, AppData or codex path.",
+  "patch_sha256": "a56ac56e35eb9032b101a71ea5d6205b95cd7143fac1b6f6efc3ab4d9380e409",
+  "grade_sha256": "43b2be813307cb8a1081223499d30d48084b41553f1dde484dab71666f5c462e",
+  "audit_sha256": "95b14fbf6fc62e2c1e3f5423b2f237159f724e2b2c79f10becffae8afbc16eda"
+}

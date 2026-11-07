@@ -1,0 +1,13 @@
+{
+  "outcome": "fail",
+  "failure_source": "environment",
+  "evidence": "grade.json verdict FAIL: tests 0/0 passed, checks 0/0, runner exit None; meta codex_home=isolated (CODEX_HOME=C:\\codex-clean). Environment failure, not the agent: stderr.txt shows repeated `exec_command failed: CreateProcessWithLogonW failed: 1909` (Windows: account locked out) from the elevated sandbox, ~22:15-22:16 UTC 7 Nov, while 3 trials ran in parallel on a fresh CODEX_HOME; file writes failed, final.patch is 0 bytes (grade: <empty-patch>). Rerun with --jobs 1.",
+  "classified_by": "main-seat",
+  "confirmed": true,
+  "confirmed_by": "main-seat",
+  "confirmed_utc": "2026-11-07T22:21:14Z",
+  "review_cleared": "Every review_required entry is the powershell.exe / cmd.exe wrapper Codex puts around each command (or, for es-toolkit, the patch's relative `../error/TimeoutError.ts` import). The commands inside are all workspace-relative: Get-Content TASK.md, source/test files, rg, Select-String, pytest/vitest, git diff. A scan of every command found no drive letter, `..`, `~`, $env, \\Users, AppData or codex path.",
+  "patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "grade_sha256": "8dc0d13eaa4f54d53ee45a2ef6474fac9b3928f384a731a4567c5505e30ba8fb",
+  "audit_sha256": "f125632ad9edc4e1ed826e1971956d9cf7b941729eba182d8db23481641b2a92"
+}

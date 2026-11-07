@@ -1,0 +1,46 @@
+{
+  "clean": true,
+  "hits": [],
+  "tool_calls": 11,
+  "review_required": [
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 4 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command \"Get-Content TASK.md; rg --files -g AGENTS.md -g pyproject.toml -g setup.cfg -g tox.ini -g '*distinct*'\""
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 6 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command \"Get-ChildItem -Force; Get-ChildItem -Filter AGENTS.md -Recurse | Select-Object -ExpandProperty FullName; Select-String -Path "
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 8 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command \"Get-Content more_itertools/more.py | Select-Object -Skip 2275 -First 340; Select-String -Path tests/test_more.py -Pattern 'cl"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 10 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command 'Get-Content tests/test_more.py | Select-Object -Skip 2751 -First 290; git status --short'"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 12 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command 'Get-Content tests/test_more.py | Select-Object -Skip 2751 -First 290; git status --short'"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 19 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -NoProfile -Command 'python -m pytest tests/test_more.py -k NumericRange'"
+    }
+  ],
+  "auditor_digest": "abfe585480a38ae6d34bc5d2e6dfbc6d613c214f83a768c23d6b72260acd470f",
+  "transcript_sha256": "032ad817dc8cef3f10c111c916deeb06e81bdcb8852d2bd7c7a4cedf5fe0fd71",
+  "patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

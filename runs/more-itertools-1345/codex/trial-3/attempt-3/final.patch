@@ -1,0 +1,88 @@
+diff --git a/more_itertools/more.py b/more_itertools/more.py
+index 7218029..91d546e 100644
+--- a/more_itertools/more.py
++++ b/more_itertools/more.py
+@@ -2376,8 +2376,8 @@ class numeric_range(Sequence):
+         if self is other:
+             return True
+ 
+-        len_self = len(self)
+-        if len_self != len(other):
++        len_self = self._len
++        if len_self != other._len:
+             return False
+ 
+         if not len_self:
+@@ -2411,7 +2411,7 @@ class numeric_range(Sequence):
+         # numeric_range hashing is intended to mirror the built-in range object's
+         # hashing.
+         # https://github.com/python/cpython/blob/f5c4880151b609e0a0a0b05c292d36b18038c061/Objects/rangeobject.c#L570
+-        len_self = len(self)
++        len_self = self._len
+         if not len_self:
+             return hash((len_self, None, None))
+         if len_self == 1:
+diff --git a/tests/test_more.py b/tests/test_more.py
+index 45ceaeb..99f6b46 100644
+--- a/tests/test_more.py
++++ b/tests/test_more.py
+@@ -33,6 +33,7 @@ from pickle import loads, dumps
+ from random import Random, choices, random, randrange, seed
+ from statistics import mean, median
+ from string import ascii_letters
++from sys import maxsize
+ from threading import Event, Thread, Lock
+ from time import sleep
+ from typing import NamedTuple
+@@ -3014,6 +3015,51 @@ class NumericRangeTests(TestCase):
+             self.assertNotEqual(range1, range2)
+             self.assertNotEqual(hash(range1), hash(range2))
+ 
++    def test_eq_large_ranges(self):
++        for args1, args2 in [
++            ((0, 10**30), (0, 10**30)),
++            ((0, 10**30, 2), (0, 10**30 - 1, 2)),
++            ((0, -10**30, -2), (0, -10**30 + 1, -2)),
++            ((0, maxsize + 1), (0, maxsize + 1)),
++        ]:
++            with self.subTest(args1=args1, args2=args2):
++                range1 = mi.numeric_range(*args1)
++                range2 = mi.numeric_range(*args2)
++                self.assertEqual(range1, range2)
++                self.assertFalse(range1 != range2)
++                self.assertEqual(hash(range1), hash(range2))
++                self.assertEqual({range1: 'value'}[range2], 'value')
++                self.assertEqual(len({range1, range2}), 1)
++
++        for args in [
++            (0, 10**30 + 1),
++            (1, 10**30 + 1),
++            (0, 2 * 10**30, 2),
++            (0, maxsize),
++        ]:
++            with self.subTest(args=args):
++                range1 = mi.numeric_range(0, 10**30)
++                range2 = mi.numeric_range(*args)
++                self.assertNotEqual(range1, range2)
++                self.assertNotEqual(range2, range1)
++
++    def test_hash_large_ranges(self):
++        for args in [
++            (0, maxsize),
++            (0, maxsize + 1),
++            (0, 10**30),
++            (0, 10**30, 2),
++            (10**30, 0, -3),
++        ]:
++            with self.subTest(args=args):
++                self.assertEqual(hash(mi.numeric_range(*args)), hash(range(*args)))
++
++    def test_len_large_ranges(self):
++        for args in [(0, maxsize + 1), (0, 10**30), (0, -10**30, -2)]:
++            with self.subTest(args=args):
++                with self.assertRaises(OverflowError):
++                    len(mi.numeric_range(*args))
++
+     def test_get_item_by_index(self):
+         for args, index, expected in [
+             ((1, 6), 2, 3),

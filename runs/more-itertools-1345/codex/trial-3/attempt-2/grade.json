@@ -1,0 +1,26 @@
+{
+  "verdict": "FAIL",
+  "tests": {
+    "total": 0,
+    "passed": 0,
+    "failed": [
+      "<empty-patch>"
+    ],
+    "skipped": [],
+    "missing": []
+  },
+  "checks": {
+    "total": 0,
+    "passed": 0,
+    "failed": []
+  },
+  "runner": {
+    "exit": null,
+    "timed_out": false,
+    "junit_ok": false,
+    "diag_tail": ""
+  },
+  "patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "task_hash": "84d0ef6dca6a94aaf72b46b66020a1a86e1851335c807ab7703675bcdd8c8a48",
+  "grader_digest": "503921db54099c66131f45ccdbdc7ab48b78e9f454fbfed1f20efad6d461ddec"
+}

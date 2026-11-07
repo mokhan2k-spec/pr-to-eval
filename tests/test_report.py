@@ -240,7 +240,7 @@ def test_retry_chain_rules(world):
     assert any("non-final attempt" in p for p in check(world))
     # third attempt
     fabricate(runs, task, "claude", 1, attempt=3)
-    assert any("more than 2 attempts" in p for p in check(world))
+    assert any("more than 2 counted attempts" in p for p in check(world))
 
 
 def test_stale_classification_flagged(world):

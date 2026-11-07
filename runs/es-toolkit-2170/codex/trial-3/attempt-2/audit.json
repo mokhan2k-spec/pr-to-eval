@@ -1,0 +1,52 @@
+{
+  "clean": false,
+  "hits": [
+    {
+      "kind": "path",
+      "where": "line 13 command_execution.command",
+      "text": "\\\\node_modules\\\\.bin\\\\vitest.cmd"
+    }
+  ],
+  "tool_calls": 9,
+  "review_required": [
+    {
+      "reason": "host-access-pattern",
+      "pattern": "parent-path",
+      "where": "patch src/promise/withTimeout.spec.ts:2",
+      "text": "import { TimeoutError } from '../error/TimeoutError.ts';"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 4 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command \"Get-Content TASK.md; Get-ChildItem -Force -Name; rg --files -g AGENTS.md -g package.json -g '*partial*'\""
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 6 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command 'Get-ChildItem -Path . -Filter AGENTS.md -Recurse -File -Force | Select-Object -ExpandProperty FullName; Get-Content src/promi"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 8 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command 'Get-Content src/promise/timeout.ts; Get-Content src/promise/delay.ts; Get-ChildItem src/error -Name; Get-Content src/promise/"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 13 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command \".\\\\node_modules\\\\.bin\\\\vitest.cmd run src/promise/withTimeout.spec.ts\""
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 15 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command \"git diff --check; git diff --stat; Get-ChildItem src/promise -Filter '*.spec.ts' -Name\""
+    }
+  ],
+  "auditor_digest": "caf07da168100c02bac4945a442659361e5c29410ba7395d2998bdb4f7de1a72",
+  "transcript_sha256": "a388d4c40447a036097f3e91d9a74ac0e28dfbbd83613c999c619cd7dd1b8c30",
+  "patch_sha256": "a86b7f8a85a58a7fd84f804a489deedef9a8670a0cf15fbf799f0bf12cb299e3"
+}

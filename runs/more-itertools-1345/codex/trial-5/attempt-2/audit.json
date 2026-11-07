@@ -1,0 +1,40 @@
+{
+  "clean": false,
+  "hits": [
+    {
+      "kind": "path",
+      "where": "line 11 command_execution.command",
+      "text": "\\\\more.py"
+    }
+  ],
+  "tool_calls": 7,
+  "review_required": [
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 4 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command 'Get-Content TASK.md; Get-ChildItem -Force -Name; rg --files -g AGENTS.md'"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 6 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command \"Get-ChildItem -Recurse -Filter AGENTS.md; Select-String -Path more_itertools/more.py -Pattern 'class numeric_range' -Context "
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 8 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command \"Get-ChildItem -Recurse -Filter AGENTS.md; Select-String -Path more_itertools/more.py -Pattern 'class numeric_range' -Context "
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 11 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\system32\\\\cmd.exe\" /c \"type more_itertools\\\\more.py\""
+    }
+  ],
+  "auditor_digest": "abfe585480a38ae6d34bc5d2e6dfbc6d613c214f83a768c23d6b72260acd470f",
+  "transcript_sha256": "b21e617303c9a8c3a44cf6449d2fe0b4c6965603a5a0c7931e4ddc4f1543b143",
+  "patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

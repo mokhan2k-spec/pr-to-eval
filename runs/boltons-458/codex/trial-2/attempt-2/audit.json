@@ -1,0 +1,40 @@
+{
+  "clean": true,
+  "hits": [],
+  "tool_calls": 9,
+  "review_required": [
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 4 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command \"Get-Content TASK.md; Get-ChildItem -Force -Name; rg --files -g AGENTS.md -g '\"'! .git'\"'\""
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 6 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command \"Get-ChildItem -Recurse -Filter AGENTS.md -File | Select-Object -ExpandProperty FullName; Get-ChildItem boltons,tests -Recurse"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 8 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command 'Get-Content boltons/dictutils.py | Select-Object -Skip 180 -First 95; Get-Content boltons/urlutils.py | Select-Object -Skip 9"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 13 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command 'python -m pytest tests'"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 15 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command 'git diff --check; git diff --stat; git status --short'"
+    }
+  ],
+  "auditor_digest": "d2ba2cfff5d7e8edb328dbf3b11828aac61481d6464463ad77ad1a2c3043fb4a",
+  "transcript_sha256": "88254056e27c74379093f83941dddc8ada8db6a627416e6ca13e14e374dc668f",
+  "patch_sha256": "aee8bf2aa503bd9ec1ece3efd1217e096169b22bb741990a89dc86b8ddd67157"
+}

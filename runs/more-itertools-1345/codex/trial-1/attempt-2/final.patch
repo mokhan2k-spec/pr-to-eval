@@ -1,0 +1,87 @@
+diff --git a/more_itertools/more.py b/more_itertools/more.py
+index 7218029..91d546e 100644
+--- a/more_itertools/more.py
++++ b/more_itertools/more.py
+@@ -2376,8 +2376,8 @@ class numeric_range(Sequence):
+         if self is other:
+             return True
+ 
+-        len_self = len(self)
+-        if len_self != len(other):
++        len_self = self._len
++        if len_self != other._len:
+             return False
+ 
+         if not len_self:
+@@ -2411,7 +2411,7 @@ class numeric_range(Sequence):
+         # numeric_range hashing is intended to mirror the built-in range object's
+         # hashing.
+         # https://github.com/python/cpython/blob/f5c4880151b609e0a0a0b05c292d36b18038c061/Objects/rangeobject.c#L570
+-        len_self = len(self)
++        len_self = self._len
+         if not len_self:
+             return hash((len_self, None, None))
+         if len_self == 1:
+diff --git a/tests/test_more.py b/tests/test_more.py
+index 45ceaeb..c5a4ea3 100644
+--- a/tests/test_more.py
++++ b/tests/test_more.py
+@@ -3,6 +3,7 @@ from __future__ import annotations
+ import cmath
+ import gc
+ import platform
++import sys
+ import types
+ import weakref
+ 
+@@ -3014,6 +3015,50 @@ class NumericRangeTests(TestCase):
+             self.assertNotEqual(range1, range2)
+             self.assertNotEqual(hash(range1), hash(range2))
+ 
++    def test_eq_and_hash_large_ranges(self):
++        stop = 10**30
++        for args1, args2 in [
++            ((0, stop, 2), (0, stop - 1, 2)),
++            ((0, -stop, -2), (0, -stop + 1, -2)),
++            (
++                (Fraction(0), stop, Fraction(1, 2)),
++                (Fraction(0), stop, Fraction(1, 2)),
++            ),
++        ]:
++            with self.subTest(args1=args1, args2=args2):
++                range1 = mi.numeric_range(*args1)
++                range2 = mi.numeric_range(*args2)
++                self.assertEqual(range1, range2)
++                self.assertFalse(range1 != range2)
++                self.assertEqual(hash(range1), hash(range2))
++                self.assertEqual({range1: 'value'}[range2], 'value')
++                self.assertEqual(len({range1, range2}), 1)
++                self.assertRaises(OverflowError, len, range1)
++
++        for args in [
++            (0, stop - 2, 2),
++            (1, stop, 2),
++            (0, stop * 2, 4),
++            (0, -stop, -2),
++            (0, 10, 2),
++        ]:
++            with self.subTest(args=args):
++                self.assertNotEqual(
++                    mi.numeric_range(0, stop, 2), mi.numeric_range(*args)
++                )
++
++    def test_hash_matches_builtin_range(self):
++        for args in [
++            (0,),
++            (2, 3, 5),
++            (0, sys.maxsize),
++            (0, sys.maxsize + 1),
++            (0, 10**30, 2),
++            (0, -10**30, -2),
++        ]:
++            with self.subTest(args=args):
++                self.assertEqual(hash(mi.numeric_range(*args)), hash(range(*args)))
++
+     def test_get_item_by_index(self):
+         for args, index, expected in [
+             ((1, 6), 2, 3),

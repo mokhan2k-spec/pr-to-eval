@@ -1,0 +1,6 @@
+Reading additional input from stdin...
+2026-11-07T22:15:26.031287Z ERROR codex_core::tools::router: error=exec_command failed: CreateProcess { message: "Rejected(\"Failed to create unified exec process: orchestrator_helper_incomplete: setup helper exited successfully before setup completed\")" }
+2026-11-07T22:16:18.149331Z ERROR codex_core::tools::router: error=exec_command failed: CreateProcess { message: "Rejected(\"Failed to create unified exec process: CreateProcessWithLogonW failed: 1909\")" }
+2026-11-07T22:16:34.126856Z ERROR codex_core::tools::router: error=exec_command failed: CreateProcess { message: "Rejected(\"Failed to create unified exec process: CreateProcessWithLogonW failed: 1909\")" }
+2026-11-07T22:16:34.506920Z ERROR codex_core::tools::router: error=exec_command failed: CreateProcess { message: "Rejected(\"Failed to create unified exec process: CreateProcessWithLogonW failed: 1909\")" }
+2026-11-07T22:16:37.267451Z ERROR codex_core::tools::router: error=patch rejected: empty patch

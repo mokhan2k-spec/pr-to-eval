@@ -583,7 +583,7 @@ def test_probe_binding_shape():
     b = agent_runs.probe_binding("claude", fake("commit"))
     assert b == {"cli_version": "fake-cli 1.0", "policy_digest": agent_runs.policy_digest("claude"),
                  "probe_digest": agent_runs.probe_digest(), "platform": agent_runs.sys.platform,
-                 "read_scope": agent_runs.READ_SCOPE}
+                 "read_scope": agent_runs.READ_SCOPE, "codex_home": None}
     assert agent_runs.probe_binding("codex", fake("commit"))["read_scope"] is None
 
 

@@ -1,0 +1,15 @@
+{
+  "status": "graded",
+  "verdict": "PASS",
+  "correctness": 3,
+  "scope": 3,
+  "reasons": "Replacing `len(...)` with the cached `_len` attribute in `__eq__` and `__hash__` avoids the ssize_t limit. The rest of both methods is unchanged, so equal ranges still compare and hash equal, hashes still mirror the built-in `range`, and `len()` still raises `OverflowError` for long ranges. I could not run the code or see the repo, so this rests on my recollection of upstream `numeric_range`, where `__eq__` and `__hash__` don't call `len()` after those lines. The change is two lines plus tests.",
+  "model": "sonnet",
+  "model_ids": [
+    "claude-sonnet-5-5"
+  ],
+  "raw_text": "{\"verdict\": \"PASS\", \"correctness\": 3, \"scope\": 3, \"reasons\": \"Replacing `len(...)` with the cached `_len` attribute in `__eq__` and `__hash__` avoids the ssize_t limit. The rest of both methods is unchanged, so equal ranges still compare and hash equal, hashes still mirror the built-in `range`, and `len()` still raises `OverflowError` for long ranges. I could not run the code or see the repo, so this rests on my recollection of upstream `numeric_range`, where `__eq__` and `__hash__` don't call `len()` after those lines. The change is two lines plus tests.\"}",
+  "patch_sha256": "aae16e8e3f80cd7ffa971b643b2242a8c30e9d047c7fe839f03dac64be05ea9a",
+  "task_hash": "84d0ef6dca6a94aaf72b46b66020a1a86e1851335c807ab7703675bcdd8c8a48",
+  "grader_prompt_sha256": "dcf7f919c67ec25b06f9fc97987319de1601be3cebe72cc761e63a392f484680"
+}

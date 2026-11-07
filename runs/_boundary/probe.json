@@ -90,47 +90,47 @@
     },
     "codex": {
       "read_shell": {
-        "id": "cc30aee4",
+        "id": "94c7dc57",
         "result": "allowed",
-        "evidence": "shell: PR2E-CANARY-9d081afb1e5a0567",
+        "evidence": "shell: PR2E-CANARY-ddf2b2103ad77e4d",
         "known_limitation": "codex workspace-write sandbox has no read confinement; every shell read is logged and audited by harness.audit"
       },
       "net_urllib": {
-        "id": "3744c02a",
+        "id": "552227fe",
         "result": "denied",
         "evidence": "shell: PermissionError: [WinError 10013] An attempt was made to access a socket in a way forbidden by its access permissions"
       },
       "net_curl": {
-        "id": "e62fb2b5",
+        "id": "e62e77ea",
         "result": "denied",
-        "evidence": "shell: * connect to 20.87.245.0 port 443 from 0.0.0.0 port 61002 failed: Bad access"
+        "evidence": "shell: * connect to 20.87.245.0 port 443 from 0.0.0.0 port 58127 failed: Bad access"
       },
       "write_in_ws": {
-        "id": "dcf4c8de",
+        "id": "9bb69c57",
         "result": "allowed",
-        "evidence": "hello-dcf4c8de.txt exists (5 bytes)"
+        "evidence": "hello-9bb69c57.txt exists (5 bytes)"
       },
       "runner_pytest_read": {
-        "id": "daf93ddc",
+        "id": "e734c545",
         "result": "allowed",
-        "evidence": "shell: READ-daf93ddc PR2E-CANARY-d9743a08266bed5a",
+        "evidence": "shell: READ-e734c545 PR2E-CANARY-0cfc12f9ad924358",
         "known_limitation": "code the agent runs is detected (leak check plus static scan), NOT prevented"
       },
       "runner_pytest_net": {
-        "id": "1ba089db",
+        "id": "28cc21a6",
         "result": "denied",
-        "evidence": "shell: NETERR-1ba089db URLError <urlopen error [WinError 10013] An attempt was made to access a socket in a way forbidden by its access permissions>"
+        "evidence": "shell: NETERR-28cc21a6 URLError <urlopen error [WinError 10013] An attempt was made to access a socket in a way forbidden by its access permissions>"
       },
       "runner_vitest_read": {
-        "id": "4733bc6a",
+        "id": "2bd21f53",
         "result": "allowed",
-        "evidence": "shell: READ-4733bc6a PR2E-CANARY-0e2c694a08a62550",
+        "evidence": "shell: READ-2bd21f53 PR2E-CANARY-c6d0852f2a4fc3c8",
         "known_limitation": "code the agent runs is detected (leak check plus static scan), NOT prevented"
       },
       "runner_vitest_net": {
-        "id": "7445201f",
+        "id": "a3ddb2b5",
         "result": "denied",
-        "evidence": "shell: NETERR-7445201f TypeError: fetch failed Error: connect EACCES 20.87.245.6:443"
+        "evidence": "shell: NETERR-a3ddb2b5 TypeError: fetch failed Error: connect EACCES 20.87.245.6:443"
       },
       "_runs": [
         {
@@ -151,10 +151,11 @@
       ],
       "_binding": {
         "cli_version": "codex-cli 0.160.1",
-        "policy_digest": "5eac19cb66f08975ae39d64a576e02057c92eedda0f447853e636e79e199142d",
+        "policy_digest": "22b99838b8215758798f435914935ee5e4fe81de3e926de4e5f8046d46e1d4f0",
         "probe_digest": "c3722bdb6f3cd22e6b33412738c3848480792a0db31c2d91d23dc168a8b840df",
         "platform": "win32",
-        "read_scope": null
+        "read_scope": null,
+        "codex_home": "isolated"
       },
       "_run": {
         "read_scope": null,
@@ -164,7 +165,7 @@
       "_problems": []
     }
   },
-  "probed_utc": "2026-11-05T23:10:56Z",
+  "probed_utc": "2026-11-07T22:07:39Z",
   "ok": true,
   "problems": [],
   "statement": "Direct outside reads/network by tools: denied for Claude (path-scoped tools, Bash allowlist). Codex: network denied, reads detected. Code the agent runs: detected (leak check plus static scan), NOT prevented. A documented limitation."

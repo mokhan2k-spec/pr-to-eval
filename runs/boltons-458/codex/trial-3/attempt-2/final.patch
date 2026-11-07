@@ -1,0 +1,80 @@
+diff --git a/boltons/dictutils.py b/boltons/dictutils.py
+index 12c58de..a181a3a 100644
+--- a/boltons/dictutils.py
++++ b/boltons/dictutils.py
+@@ -225,6 +225,7 @@ class OrderedMultiDict(dict):
+         Called ``addlist`` for consistency with :meth:`getlist`, but
+         tuples and other sequences and iterables work.
+         """
++        v = list(v)
+         if not v:
+             return
+         self_insert = self._insert
+diff --git a/boltons/urlutils.py b/boltons/urlutils.py
+index 712e5a1..ba84598 100644
+--- a/boltons/urlutils.py
++++ b/boltons/urlutils.py
+@@ -1123,6 +1123,7 @@ class OrderedMultiDict(dict):
+         Called ``addlist`` for consistency with :meth:`getlist`, but
+         tuples and other sequences and iterables work.
+         """
++        v = list(v)
+         if not v:
+             return
+         self_insert = self._insert
+diff --git a/tests/test_dictutils.py b/tests/test_dictutils.py
+index c82a4a2..d6d654a 100644
+--- a/tests/test_dictutils.py
++++ b/tests/test_dictutils.py
+@@ -2,6 +2,30 @@ import sys
+ import pytest
+ 
+ from boltons.dictutils import OMD, OneToOne, ManyToMany, FrozenDict, subdict, FrozenHashError
++from boltons.urlutils import OrderedMultiDict as URLOrderedMultiDict, QueryParamDict
++
++
++@pytest.mark.parametrize('dict_type', [OMD, URLOrderedMultiDict, QueryParamDict])
++@pytest.mark.parametrize('iterable', [list, tuple, iter, lambda v: (x for x in v)])
++def test_addlist_iterables(dict_type, iterable):
++    omd = dict_type()
++    omd.addlist('empty', iterable([]))
++    assert 'empty' not in omd
++    assert len(omd) == 0
++
++    omd.addlist('a', iterable(range(2)))
++    omd.add('b', 9)
++    omd.add('a', 2)
++    omd.addlist('a', iterable(range(3, 5)))
++    omd.addlist('a', iterable([]))
++
++    assert omd.getlist('a') == [0, 1, 2, 3, 4]
++    assert omd.get('a') == omd['a'] == 4
++    assert omd.items(multi=True) == [
++        ('a', 0), ('a', 1), ('b', 9), ('a', 2), ('a', 3), ('a', 4)]
++    assert omd.todict(multi=True) == {'a': [0, 1, 2, 3, 4], 'b': [9]}
++    assert omd.poplast('a') == 4
++    assert omd.getlist('a') == [0, 1, 2, 3]
+ 
+ 
+ _ITEMSETS = [[],
+diff --git a/tests/test_urlutils.py b/tests/test_urlutils.py
+index 8cac423..22f95dd 100644
+--- a/tests/test_urlutils.py
++++ b/tests/test_urlutils.py
+@@ -4,6 +4,16 @@ from boltons import urlutils
+ from boltons.urlutils import URL, QueryParamDict, _URL_RE, find_all_links
+ 
+ 
++def test_query_params_addlist_iterator():
++    url = URL('https://example.com/?a=0')
++    url.query_params.addlist('a', (str(value) for value in range(1, 3)))
++    url.query_params.addlist('empty', iter([]))
++    assert url.query_params.getlist('a') == ['0', '1', '2']
++    assert url.query_params.get('a') == '2'
++    assert url.query_params.to_text() == 'a=0&a=1&a=2'
++    assert url.to_text() == 'https://example.com/?a=0&a=1&a=2'
++
++
+ # fully quoted urls that should round trip
+ TEST_URLS = [
+     'http://googlewebsite.com/e-shops.aspx',

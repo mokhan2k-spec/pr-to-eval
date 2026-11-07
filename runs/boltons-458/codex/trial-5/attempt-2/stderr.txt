@@ -1,0 +1,4 @@
+Reading additional input from stdin...
+2026-11-07T22:10:03.868082Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: IO error: An existing connection was forcibly closed by the remote host. (os error 10054), url: wss://chatgpt.com/backend-api/codex/responses
+2026-11-07T22:10:04.532870Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: IO error: An existing connection was forcibly closed by the remote host. (os error 10054), url: wss://chatgpt.com/backend-api/codex/responses
+2026-11-07T22:10:04.855499Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: IO error: An existing connection was forcibly closed by the remote host. (os error 10054), url: wss://chatgpt.com/backend-api/codex/responses

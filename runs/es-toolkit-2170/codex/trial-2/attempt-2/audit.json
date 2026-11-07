@@ -1,0 +1,64 @@
+{
+  "clean": true,
+  "hits": [],
+  "tool_calls": 12,
+  "review_required": [
+    {
+      "reason": "host-access-pattern",
+      "pattern": "parent-path",
+      "where": "patch src/promise/withTimeout.spec.ts:2",
+      "text": "import { TimeoutError } from '../error/TimeoutError.ts';"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "parent-path",
+      "where": "patch src/promise/withTimeout.ts:1",
+      "text": "import { TimeoutError } from '../error/TimeoutError.ts';"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 4 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command \"Get-Content TASK.md; rg --files -g AGENTS.md -g package.json -g '*zip*' -g '*unzip*'\""
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 6 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command 'Get-ChildItem -Path . -Filter AGENTS.md -Recurse | Select-Object -ExpandProperty FullName; Get-Content src/promise/withTimeou"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 8 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command 'Get-Content src/promise/timeout.ts; Get-Content src/promise/delay.ts; Get-ChildItem -Force; Get-ChildItem src/error; Get-Comm"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 13 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command 'npx --no-install vitest run src/promise/withTimeout.spec.ts'"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 15 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command 'npx.cmd --no-install vitest run src/promise/withTimeout.spec.ts; Get-ChildItem node_modules/.bin | Select-Object -ExpandPrope"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 19 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command 'npx.cmd --no-install vitest run'"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 20 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command 'node node_modules/typescript/bin/tsc --noEmit --strict --target es2022 --module nodenext --allowImportingTsExtensions src/pro"
+    }
+  ],
+  "auditor_digest": "caf07da168100c02bac4945a442659361e5c29410ba7395d2998bdb4f7de1a72",
+  "transcript_sha256": "064f699df946fab46bbd2b184d75890a714bddc6053b2b53332a464ddddcac39",
+  "patch_sha256": "ea33c51eeb75e0c6747f40dee1ca3eede3b4c0fec0d8b77d1c22f37d650adcbb"
+}

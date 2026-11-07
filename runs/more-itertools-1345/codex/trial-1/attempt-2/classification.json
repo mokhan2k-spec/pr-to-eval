@@ -1,0 +1,14 @@
+{
+  "outcome": "pass",
+  "failure_source": null,
+  "evidence": "grade.json verdict PASS: tests 42/42 passed, checks 3/3, runner exit 0; meta codex_home=isolated (CODEX_HOME=C:\\codex-clean). Audit hit 'test_hash_matches_builtin_range' is the name of a test the agent wrote in its own patch (compares hash(mi.numeric_range(*args)) with hash(range(*args))). TASK.md line 25 says the hash must match the equal built-in range, so the name follows from the task. All 5 commands were workspace-only. False positive.",
+  "classified_by": "main-seat",
+  "confirmed": true,
+  "confirmed_by": "main-seat",
+  "confirmed_utc": "2026-11-07T22:21:14Z",
+  "audit_override": true,
+  "review_cleared": "Every review_required entry is the powershell.exe / cmd.exe wrapper Codex puts around each command (or, for es-toolkit, the patch's relative `../error/TimeoutError.ts` import). The commands inside are all workspace-relative: Get-Content TASK.md, source/test files, rg, Select-String, pytest/vitest, git diff. A scan of every command found no drive letter, `..`, `~`, $env, \\Users, AppData or codex path.",
+  "patch_sha256": "3da34a3af103d0b038f555b8635fa98ace64cef64cefd515a3ddb42b2fc338b3",
+  "grade_sha256": "eb74acb2497a4d43047eb51336f456a378954fb5bc41c8b0892afa4f04d99c10",
+  "audit_sha256": "a1b935d44315d30f4cb73bd42e2c5e176b9f7dd77becc9f8cde0c8b185b088fb"
+}

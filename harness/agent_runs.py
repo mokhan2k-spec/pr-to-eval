@@ -37,6 +37,9 @@ CODEX_MODEL = "gpt-6.1-sol"
 CODEX_EFFORT = "medium"
 AGENTS = ("claude", "codex")
 TRIALS = 5
+# Attempts per trial. A superseded host-configured Codex attempt (made on the host's ~/.codex
+# before the A15 fix) does not count: it was not a valid independent run, so the rerun with an
+# isolated CODEX_HOME still gets the normal one environment retry. See superseded_host_run().
 MAX_ATTEMPTS = 2
 DEFAULT_TIMEOUT = 1200
 GITIGNORE = ["__pycache__/", ".pytest_cache/", "node_modules/", "node_modules", "*.pyc"]
@@ -47,6 +50,19 @@ CODEX_LEAKS = ["~/.codex/AGENTS.md global rules still load (helper-routing rules
 # as host-configured: its verdict is kept but labelled NOT independent and kept out of
 # headline figures. Only audit hits that are reads under ~/.codex qualify; anything else
 # is still contamination (or must be a reviewed false positive).
+# Fix for A15: run Codex with its own CODEX_HOME (a folder made only for these runs, holding
+# just the login). Then ~/.codex/AGENTS.md is never loaded. The value is a path, so only the
+# MODE ("isolated") enters the policy digest, never the path itself.
+CODEX_HOME_ENV = "CODEX_HOME"
+# Anything here could put host rules back into the run, so an isolated home must not have it.
+CODEX_HOME_FORBIDDEN = ("agents.md", "agents.override.md", "config.toml", "instructions.md",
+                        "prompts", "rules", "skills", "plugins", "memories")
+# Codex writes these stock folders into ANY home on first launch (OpenAI's bundled system
+# skills, OpenAI's curated plugin catalogue). They are the same for every fresh install, so
+# they are allowed; anything else inside them would be a user's own and is refused.
+CODEX_HOME_STOCK = {"skills": {".system"},
+                    "plugins": {".remote-plugin-install-staging", "cache"}}
+CODEX_HOME_STOCK_PLUGIN_CACHE = {"openai-curated-remote"}
 HOST_CONFIG_HIT_RE = re.compile(r"^<HOME>[\\/]+\.codex[\\/]+[^\\/]+$")
 QWEN_CALL_RE = re.compile(r"\bqwen\s+(read|squash|code)\b")
 CODEX_MODEL_NOTE = ("codex exec --json does not state the model it served; "
@@ -321,11 +337,78 @@ def build_command(agent: str, ws: Path, exe=None, scope: str | None = None,
 
 
 def agent_env(agent: str) -> dict:
-    """Allowlisted environment: no inherited tokens or API keys."""
+    """Allowlisted environment: no inherited tokens or API keys. Codex also gets CODEX_HOME
+    when it is set (an isolated home; probe_gate refuses Codex runs without one)."""
     env = {k: v for k, v in os.environ.items() if k.upper() in ENV_ALLOW}
     if agent == "claude":
         env["CLAUDE_CODE_DISABLE_CLAUDE_MDS"] = "1"
+    if agent == "codex" and os.environ.get(CODEX_HOME_ENV):
+        env[CODEX_HOME_ENV] = os.environ[CODEX_HOME_ENV]
     return env
+
+
+def codex_home_mode() -> str | None:
+    """"isolated" when CODEX_HOME is set, else None (the host's ~/.codex)."""
+    return "isolated" if os.environ.get(CODEX_HOME_ENV) else None
+
+
+def _codex_trust_only(path: Path) -> bool:
+    """True when config.toml holds nothing but the folder-trust entries Codex writes itself for
+    our temp workspaces. (The run passes --ignore-user-config, so it is never loaded anyway.)"""
+    import tomllib
+    try:
+        data = tomllib.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return False
+    projects = data.pop("projects", None)
+    if data or not isinstance(projects, dict):
+        return False
+    root = str(runs_root()).lower()
+    return all(k.lower().startswith(root) and v == {"trust_level": "trusted"}
+               for k, v in projects.items())
+
+
+def _codex_stock_only(path: Path) -> bool:
+    """True when a skills/ or plugins/ folder holds only what Codex itself installs."""
+    if path.name.lower() == "config.toml" and path.is_file():
+        return _codex_trust_only(path)
+    allowed = CODEX_HOME_STOCK.get(path.name.lower())
+    if allowed is None or not path.is_dir():
+        return False
+    kids = set(os.listdir(path))
+    if not kids <= allowed:
+        return False
+    cache = path / "cache"
+    if path.name.lower() == "plugins" and cache.is_dir():
+        return set(os.listdir(cache)) <= CODEX_HOME_STOCK_PLUGIN_CACHE
+    return True
+
+
+def codex_home_problems() -> list[str]:
+    """Reasons the current CODEX_HOME cannot give an independent Codex run (empty = ok)."""
+    raw = os.environ.get(CODEX_HOME_ENV)
+    if not raw:
+        return [f"{CODEX_HOME_ENV} is not set, so Codex would load the host's ~/.codex/AGENTS.md "
+                f"(not independent); log in once with a fresh {CODEX_HOME_ENV} and set it"]
+    home = Path(raw)
+    if not home.is_dir():
+        return [f"{CODEX_HOME_ENV} is not a directory"]
+    try:
+        if home.resolve() == (Path.home() / ".codex").resolve():
+            return [f"{CODEX_HOME_ENV} is the host's ~/.codex, not an isolated home"]
+    except OSError as e:
+        return [f"{CODEX_HOME_ENV} cannot be resolved: {type(e).__name__}"]
+    names = list(os.listdir(home))
+    bad = sorted(n for n in names
+                 if (n.lower() in CODEX_HOME_FORBIDDEN and not _codex_stock_only(home / n))
+                 or n.lower().endswith(".md"))
+    problems = []
+    if bad:
+        problems.append(f"{CODEX_HOME_ENV} holds {bad}: these can load host rules; use a home "
+                        "that holds only the login")
+    if "auth.json" not in names:
+        problems.append(f"{CODEX_HOME_ENV} has no auth.json (run `codex login` with it set)")
+    return problems
 
 
 def clean_env(extra: dict | None = None) -> dict:
@@ -354,14 +437,17 @@ def probe_digest() -> str:
 _FILE_TOOL_RE = re.compile(r"^(Read|Edit|Write)\(.*\*\*\)$")
 
 
-def policy_digest(agent: str, platform: str | None = None, scope: str | None = None) -> str:
+def policy_digest(agent: str, platform: str | None = None, scope: str | None = None,
+                  codex_home: str | None = None) -> str:
     """sha256 over the agent's run policy (argv with the workspace as a placeholder, env
     allowlist NAMES, fixed env values, read scope, model, effort). Machine independent: no
     absolute paths, no usernames, no env values. The env part uses the ENV_ALLOW policy
     list, not the keys that happen to be set on this machine. `platform` is the one the run
     was made on (the codex argv differs on Windows), so a Linux checkout can verify it.
     `scope` is the Claude read scope actually measured (default READ_SCOPE): a probe run with
-    --scope absolute binds the absolute policy and cannot certify the default one (R25)."""
+    --scope absolute binds the absolute policy and cannot certify the default one (R25).
+    `codex_home="isolated"` is the Codex policy with its own CODEX_HOME; None is the older
+    host-home policy, whose digest is unchanged so earlier records still verify."""
     scope = scope or READ_SCOPE
     cmd = build_command(agent, Path("<WS>"), exe=[agent], scope=scope, platform=platform)
     if agent == "claude" and scope == "absolute":
@@ -372,16 +458,21 @@ def policy_digest(agent: str, platform: str | None = None, scope: str | None = N
               "read_scope": scope if agent == "claude" else None,
               "model": CLAUDE_MODEL if agent == "claude" else CODEX_MODEL,
               "effort": None if agent == "claude" else CODEX_EFFORT}
+    if agent == "codex" and codex_home == "isolated":
+        policy["codex_home"] = "isolated"
+        policy["env_names"] = sorted(set(policy["env_names"]) | {CODEX_HOME_ENV})
     return sha256_bytes(json.dumps(policy, sort_keys=True, ensure_ascii=True).encode("utf-8"))
 
 
 def probe_binding(agent: str, exe=None, scope: str | None = None) -> dict:
     """What a probe record certifies. `scope` is the read scope the probe measured; launches
     and report --check compare against the default (READ_SCOPE) policy that runs use."""
+    home = codex_home_mode() if agent == "codex" else None
     return {"cli_version": cli_version(agent, exe),
-            "policy_digest": policy_digest(agent, scope=scope),
+            "policy_digest": policy_digest(agent, scope=scope, codex_home=home),
             "probe_digest": probe_digest(), "platform": sys.platform,
-            "read_scope": (scope or READ_SCOPE) if agent == "claude" else None}
+            "read_scope": (scope or READ_SCOPE) if agent == "claude" else None,
+            "codex_home": home}
 
 
 # --- workspace and patch capture ------------------------------------------
@@ -539,9 +630,24 @@ def interrupted_problems(adir: Path) -> list[str]:
     return problems
 
 
+def superseded_host_run(adir: Path) -> bool:
+    """A confirmed host-configured Codex attempt made without an isolated CODEX_HOME. It is
+    kept for the record but does not use up one of the MAX_ATTEMPTS."""
+    meta = read_json(adir / "meta.json") or {}
+    cls = read_json(adir / "classification.json") or {}
+    return bool(meta.get("agent") == "codex" and meta.get("codex_home") != "isolated"
+                and cls.get("confirmed") and not cls.get("stale") and cls.get("host_configured"))
+
+
+def counted_attempts(attempts: list[tuple[int, Path]]) -> int:
+    """Attempts that count toward MAX_ATTEMPTS (all but superseded host-configured runs)."""
+    return sum(1 for _, d in attempts if not superseded_host_run(d))
+
+
 def retry_allowed(prev_dir: Path) -> tuple[bool, str]:
     """A new attempt needs the previous attempt's CONFIRMED classification to be
-    environment or contaminated, or (if it never finished) a valid interrupted.json."""
+    environment or contaminated, or host-configured (Codex on the host's ~/.codex), or (if
+    it never finished) a valid interrupted.json."""
     meta = read_json(prev_dir / "meta.json") or {}
     status = meta.get("status")
     if status == "started":
@@ -563,7 +669,9 @@ def retry_allowed(prev_dir: Path) -> tuple[bool, str]:
         return False, "previous attempt's classification is stale"
     if cls.get("outcome") == "contaminated" or cls.get("failure_source") == "environment":
         return True, ""
-    return False, "previous attempt is final (not environment/contaminated)"
+    if cls.get("host_configured") and meta.get("codex_home") != "isolated":
+        return True, ""                    # rerun with an isolated CODEX_HOME (A15 fix)
+    return False, "previous attempt is final (not environment/contaminated/host-configured)"
 
 
 def plan_attempt(runs_dir: Path, task_id: str, agent: str, trial: int) -> tuple[int | None, str]:
@@ -575,8 +683,9 @@ def plan_attempt(runs_dir: Path, task_id: str, agent: str, trial: int) -> tuple[
     ok, why = retry_allowed(last_dir)
     if not ok:
         return None, why
-    if last_n >= MAX_ATTEMPTS:
-        return None, f"max {MAX_ATTEMPTS} attempts per trial reached"
+    if counted_attempts(attempts) >= MAX_ATTEMPTS:
+        return None, (f"max {MAX_ATTEMPTS} attempts per trial reached (superseded host-configured "
+                      "Codex attempts do not count)")
     return last_n + 1, ""
 
 
@@ -618,12 +727,14 @@ def probe_gate(runs_dir: Path, agent: str, exe=None) -> tuple[dict | None, list[
     if not isinstance(rec, dict):
         return None, [f"{agent}: no boundary probe record in {probe_path}"]
     problems = [f"{agent}: probe verdict failed: {p}" for p in verdict_ok(agent, rec)]
+    if agent == "codex":
+        problems += [f"{agent}: {p}" for p in codex_home_problems()]
     bound = rec.get("_binding")
     if not isinstance(bound, dict):
         problems.append(f"{agent}: probe record has no _binding (re-run the probe)")
     else:
         cur = probe_binding(agent, exe)
-        for k in ("cli_version", "policy_digest", "probe_digest", "read_scope"):
+        for k in ("cli_version", "policy_digest", "probe_digest", "read_scope", "codex_home"):
             if bound.get(k) != cur[k]:
                 problems.append(f"{agent}: probe _binding.{k} is stale (probed {bound.get(k)!r}, "
                                 f"now {cur[k]!r}); re-run the probe")
@@ -682,7 +793,9 @@ def run_attempt(task: Task, agent: str, trial: int, attempt: int, runs_dir: Path
             "requested_model": CLAUDE_MODEL if agent == "claude" else CODEX_MODEL,
             "requested_effort": None if agent == "claude" else CODEX_EFFORT,
             "read_scope": READ_SCOPE if agent == "claude" else None,
-            "known_context_leak": CODEX_LEAKS if agent == "codex" else [],
+            "codex_home": codex_home_mode() if agent == "codex" else None,
+            "known_context_leak": (CODEX_LEAKS if agent == "codex" and not codex_home_mode()
+                                   else []),
             "boundary": {"statement": BOUNDARY_STATEMENT,
                          "probe": boundary_summary(probe_runs_dir or runs_dir, agent)}}
     if prompt is not None and prompt != PROMPT:

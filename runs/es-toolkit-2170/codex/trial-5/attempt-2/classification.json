@@ -1,0 +1,14 @@
+{
+  "outcome": "pass",
+  "failure_source": null,
+  "evidence": "grade.json verdict PASS: tests 17/17 passed, checks 3/3, runner exit 0; meta codex_home=isolated (CODEX_HOME=C:\\codex-clean). Audit path hit '\\node_modules\\.bin\\vitest.cmd' is the command `.\\node_modules\\.bin\\vitest.cmd run src/promise/...`, relative to the workspace (the repo's own vitest). Not a host path. False positive.",
+  "classified_by": "main-seat",
+  "confirmed": true,
+  "confirmed_by": "main-seat",
+  "confirmed_utc": "2026-11-07T22:21:14Z",
+  "audit_override": true,
+  "review_cleared": "Every review_required entry is the powershell.exe / cmd.exe wrapper Codex puts around each command (or, for es-toolkit, the patch's relative `../error/TimeoutError.ts` import). The commands inside are all workspace-relative: Get-Content TASK.md, source/test files, rg, Select-String, pytest/vitest, git diff. A scan of every command found no drive letter, `..`, `~`, $env, \\Users, AppData or codex path.",
+  "patch_sha256": "d8ee84af2b9faa962a2809393c4500718d3e5c134cd343191634db6f544d93fa",
+  "grade_sha256": "d4c4ee6d4b9a81fdbf65411c7946bd1afaf2c2e2497328123ef597d7c4ae7e3e",
+  "audit_sha256": "3e9affc34615000566a5f4ce0af4365a0b30cac91570a316e6ee52e02337461e"
+}

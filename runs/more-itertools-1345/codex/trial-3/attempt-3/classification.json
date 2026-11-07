@@ -1,0 +1,13 @@
+{
+  "outcome": "pass",
+  "failure_source": null,
+  "evidence": "grade.json verdict PASS: tests 42/42 passed, checks 3/3, runner exit 0; meta codex_home=isolated (CODEX_HOME=C:\\codex-clean), run with --jobs 1 after the attempt-2 environment failure. Audit clean.",
+  "classified_by": "main-seat",
+  "confirmed": true,
+  "confirmed_by": "main-seat",
+  "confirmed_utc": "2026-11-07T22:31:11Z",
+  "review_cleared": "Every review_required entry is the powershell.exe wrapper Codex puts around each command. The commands inside are all workspace-relative: Get-Content TASK.md, rg/Select-String/Get-Content on more_itertools/more.py and tests/test_more.py, pytest -k NumericRange, git diff. A scan of every command found no drive letter, `..`, `~`, $env, \\Users, AppData or codex path.",
+  "patch_sha256": "46bb08aadccee8d662bcede6713bf24ad76ba5855f75e1b22436611c3da17c79",
+  "grade_sha256": "3cdbbc3c33e9712e7fe14de94023403297ad74eb781752d7aa8e2abe901523fb",
+  "audit_sha256": "4cddfa15ababf32e56cb5d41cb7137c6234f11114617f92bcba4717a90806a92"
+}

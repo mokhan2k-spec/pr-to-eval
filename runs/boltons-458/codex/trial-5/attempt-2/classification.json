@@ -1,0 +1,14 @@
+{
+  "outcome": "pass",
+  "failure_source": null,
+  "evidence": "grade.json verdict PASS: tests 212/212 passed, checks 3/3, runner exit 0; meta codex_home=isolated (CODEX_HOME=C:\\codex-clean). Audit hit 'urlutils.QueryParamDict' (record 17) is pytest output of the agent's OWN new test (test_addlist_iterables[iter-QueryParamDict]). TASK.md line 14 names QueryParamDict in boltons/urlutils.py, so the identifier comes from the task, not the hidden tests. False positive.",
+  "classified_by": "main-seat",
+  "confirmed": true,
+  "confirmed_by": "main-seat",
+  "confirmed_utc": "2026-11-07T22:21:14Z",
+  "audit_override": true,
+  "review_cleared": "Every review_required entry is the powershell.exe / cmd.exe wrapper Codex puts around each command (or, for es-toolkit, the patch's relative `../error/TimeoutError.ts` import). The commands inside are all workspace-relative: Get-Content TASK.md, source/test files, rg, Select-String, pytest/vitest, git diff. A scan of every command found no drive letter, `..`, `~`, $env, \\Users, AppData or codex path.",
+  "patch_sha256": "ac4caea5b406fbcb7e2b654d117c0b22fb91d45eb085c8019edebc45d94f6003",
+  "grade_sha256": "0bdece0ca2f5d57363cec71ac176e5f2ea2a022e5bb058dbde759dacde6a56f5",
+  "audit_sha256": "d19c8e51febd2ee4db09b24464d08796e62661426c0f2bd5c7eb8e7d464f4291"
+}

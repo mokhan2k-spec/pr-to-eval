@@ -1,0 +1,52 @@
+{
+  "clean": false,
+  "hits": [
+    {
+      "kind": "path",
+      "where": "line 13 command_execution.command",
+      "text": "\\\\node_modules\\\\.bin\\\\vitest.cmd"
+    }
+  ],
+  "tool_calls": 9,
+  "review_required": [
+    {
+      "reason": "host-access-pattern",
+      "pattern": "parent-path",
+      "where": "patch src/promise/withTimeout.spec.ts:2",
+      "text": "import { TimeoutError } from '../error/TimeoutError.ts';"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 4 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command \"Get-Content TASK.md; Get-ChildItem -Force -Name; rg --files -g AGENTS.md -g package.json -g '*dropRightWhile*'\""
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 6 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command 'Get-ChildItem -Filter AGENTS.md -Recurse -File | Select-Object -ExpandProperty FullName; Get-Content src/promise/withTimeout."
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 8 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command \"Get-Content src/promise/timeout.ts; Get-Content src/promise/delay.ts; Get-ChildItem src -Recurse -Filter '*TimeoutError*'; gi"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 13 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command \".\\\\node_modules\\\\.bin\\\\vitest.cmd run src/promise/withTimeout.spec.ts\""
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 15 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command 'git diff --check; git diff --stat'"
+    }
+  ],
+  "auditor_digest": "caf07da168100c02bac4945a442659361e5c29410ba7395d2998bdb4f7de1a72",
+  "transcript_sha256": "ff594a52cd71ca9b74f5889f1fae83c88fe11608b4e7f01ed9a0fac6a0bd9857",
+  "patch_sha256": "074ea9d761616a5f674fc3f774e2677fb89ae27dc5bbb26fb87e5a56ce68fe39"
+}

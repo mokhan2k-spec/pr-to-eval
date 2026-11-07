@@ -1,0 +1,17 @@
+Reading additional input from stdin...
+2026-11-07T22:14:41.959211Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when Client(HttpRequest(HttpRequest("http/request failed: error sending request for url (https://chatgpt.com/backend-api/ps/mcp)")))
+2026-11-07T22:14:42.312555Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when Client(HttpRequest(HttpRequest("http/request failed: error sending request for url (https://chatgpt.com/backend-api/ps/mcp)")))
+2026-11-07T22:14:46.761839Z ERROR codex_models_manager::manager: failed to refresh available models: request timed out
+2026-11-07T22:15:40.181958Z ERROR codex_core::tools::router: error=exec_command failed: CreateProcess { message: "Rejected(\"Failed to create unified exec process: CreateProcessWithLogonW failed: 1909\")" }
+2026-11-07T22:15:44.676585Z ERROR codex_core::tools::router: error=exec_command failed: CreateProcess { message: "Rejected(\"Failed to create unified exec process: CreateProcessWithLogonW failed: 1909\")" }
+2026-11-07T22:15:51.929095Z ERROR codex_core::tools::router: error=Exit code: 1
+Wall time: 2.1 seconds
+Output:
+Failed to write file <WS>\more_itertools\more.py
+
+2026-11-07T22:16:00.318668Z ERROR codex_core::tools::router: error=Exit code: 1
+Wall time: 2 seconds
+Output:
+Failed to write file <WS>\more_itertools\more.py
+
+2026-11-07T22:16:04.255593Z ERROR codex_core::tools::router: error=exec_command failed: CreateProcess { message: "Rejected(\"Failed to create unified exec process: CreateProcessWithLogonW failed: 1909\")" }

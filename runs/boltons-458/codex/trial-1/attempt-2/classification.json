@@ -1,0 +1,13 @@
+{
+  "outcome": "pass",
+  "failure_source": null,
+  "evidence": "grade.json verdict PASS: tests 212/212 passed, checks 3/3, runner exit 0; meta codex_home=isolated (CODEX_HOME=C:\\codex-clean). Audit clean.",
+  "classified_by": "main-seat",
+  "confirmed": true,
+  "confirmed_by": "main-seat",
+  "confirmed_utc": "2026-11-07T22:21:14Z",
+  "review_cleared": "Every review_required entry is the powershell.exe / cmd.exe wrapper Codex puts around each command (or, for es-toolkit, the patch's relative `../error/TimeoutError.ts` import). The commands inside are all workspace-relative: Get-Content TASK.md, source/test files, rg, Select-String, pytest/vitest, git diff. A scan of every command found no drive letter, `..`, `~`, $env, \\Users, AppData or codex path.",
+  "patch_sha256": "8a658651862ac1d6f00654e0bf02a1abaa19a5608ab77eaab445b9345cd2f08b",
+  "grade_sha256": "80d99ccc930d8dc98053b0a2b0c9d0df73ecc4338c41bd8dbe8081e772b86eb4",
+  "audit_sha256": "96dca1d206ae3a3cbc16146e63fd2ea989d800689ad2c48a5dbd09c6722426a6"
+}

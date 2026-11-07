@@ -1,0 +1,57 @@
+{
+  "clean": false,
+  "hits": [
+    {
+      "kind": "path",
+      "where": "line 13 command_execution.command",
+      "text": "\\\\node_modules\\\\.bin\\\\vitest.cmd"
+    },
+    {
+      "kind": "path",
+      "where": "line 15 command_execution.command",
+      "text": "\\\\node_modules\\\\.bin\\\\vitest.cmd"
+    }
+  ],
+  "tool_calls": 9,
+  "review_required": [
+    {
+      "reason": "host-access-pattern",
+      "pattern": "parent-path",
+      "where": "patch src/promise/withTimeout.spec.ts:2",
+      "text": "import { TimeoutError } from '../error/TimeoutError.ts';"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 4 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command \"Get-Content TASK.md; rg --files -g AGENTS.md -g package.json -g '*lock*' -g '*flatten*'\""
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 6 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command 'Get-ChildItem -Force -Name; Get-ChildItem -Path src -Filter AGENTS.md -Recurse | Select-Object -ExpandProperty FullName; Get-"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 8 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command \"Get-Content src/promise/timeout.ts; Get-Content src/promise/delay.ts; Get-ChildItem src -Recurse -Filter '*TimeoutError*' | S"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 13 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command \".\\\\node_modules\\\\.bin\\\\vitest.cmd run src/promise/withTimeout.spec.ts\""
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 15 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command \".\\\\node_modules\\\\.bin\\\\vitest.cmd run src/promise; git diff --check; git diff --stat\""
+    }
+  ],
+  "auditor_digest": "caf07da168100c02bac4945a442659361e5c29410ba7395d2998bdb4f7de1a72",
+  "transcript_sha256": "014c045dbf351419f163d0db3f8e56c782983a6c697355e6c340a72663ec45e2",
+  "patch_sha256": "d9dbfbec34f3a80c0b3481a09a201e3e8ede3a5c0b29b3a8c37c365731387f27"
+}

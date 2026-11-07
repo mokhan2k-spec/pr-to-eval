@@ -1,0 +1,5 @@
+Reading additional input from stdin...
+2026-11-07T22:11:42.277871Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when Client(HttpRequest(HttpRequest("http/request failed: error sending request for url (https://chatgpt.com/backend-api/ps/mcp)")))
+2026-11-07T22:11:42.745826Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: IO error: An existing connection was forcibly closed by the remote host. (os error 10054), url: wss://chatgpt.com/backend-api/codex/responses
+2026-11-07T22:11:42.870351Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when Client(HttpRequest(HttpRequest("http/request failed: error sending request for url (https://chatgpt.com/backend-api/ps/mcp)")))
+2026-11-07T22:11:43.953505Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when Client(HttpRequest(HttpRequest("http/request failed: error sending request for url (https://chatgpt.com/backend-api/ps/mcp)")))

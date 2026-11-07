@@ -1,0 +1,72 @@
+{
+  "clean": false,
+  "hits": [
+    {
+      "kind": "path",
+      "where": "line 8 command_execution.command",
+      "text": "\\\\more.py"
+    },
+    {
+      "kind": "path",
+      "where": "line 10 command_execution.command",
+      "text": "\\\\more.py"
+    },
+    {
+      "kind": "path",
+      "where": "line 10 command_execution.command",
+      "text": "\\\\test_more.py"
+    },
+    {
+      "kind": "path",
+      "where": "line 12 command_execution.command",
+      "text": "\\\\test_more.py"
+    },
+    {
+      "kind": "path",
+      "where": "line 19 command_execution.command",
+      "text": "\\\\test_more.py"
+    }
+  ],
+  "tool_calls": 10,
+  "review_required": [
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 6 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command \"Get-Content TASK.md; rg --files -g AGENTS.md -g pyproject.toml -g setup.cfg -g '*test*' -g 'more.py' -g 'recipes.py'\""
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 8 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command \"Get-ChildItem -Force; Get-ChildItem -Path . -Filter AGENTS.md -Recurse; Select-String -Path more_itertools\\\\more.py -Pattern "
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 10 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command '$lines = Get-Content more_itertools'\"\\\\more.py; \"'$lines[2275..2610]; Select-String -Path tests'\"\\\\test_more.py -Pattern 'cla"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 12 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command '$lines = Get-Content tests'\"\\\\test_more.py; \"'$lines[0..35]; $lines[2751..3050]; git status --short'"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 17 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command 'python -m pytest tests/test_more.py -k NumericRange'"
+    },
+    {
+      "reason": "host-access-pattern",
+      "pattern": "absolute-path",
+      "where": "line 19 command_execution.command:1",
+      "text": "\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command \"git diff --stat; git diff --check; Select-String -Path tests\\\\test_more.py -Pattern 'def test_eq_large_ranges|class NumericRa"
+    }
+  ],
+  "auditor_digest": "abfe585480a38ae6d34bc5d2e6dfbc6d613c214f83a768c23d6b72260acd470f",
+  "transcript_sha256": "c3d50bf84cfd6f9faf3a7040ca9defbf00d33c89734a02f1b73b27925c9d4e8a",
+  "patch_sha256": "6eee26a33b2d9d538f31b9bbcab690d519259455a4fd46a6a4b6d568f5227eee"
+}

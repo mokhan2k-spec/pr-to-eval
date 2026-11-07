@@ -1,0 +1,5 @@
+Reading additional input from stdin...
+2026-11-07T22:15:04.900085Z ERROR codex_api::endpoint::responses_websocket: failed to connect to websocket: IO error: An existing connection was forcibly closed by the remote host. (os error 10054), url: wss://chatgpt.com/backend-api/codex/responses
+2026-11-07T22:15:36.109896Z ERROR codex_core::tools::router: error=exec_command failed: CreateProcess { message: "Rejected(\"Failed to create unified exec process: CreateProcessWithLogonW failed: 1909\")" }
+2026-11-07T22:15:41.575869Z ERROR codex_core::tools::router: error=exec_command failed: CreateProcess { message: "Rejected(\"Failed to create unified exec process: CreateProcessWithLogonW failed: 1909\")" }
+2026-11-07T22:15:50.152459Z ERROR codex_core::tools::router: error=exec_command failed: CreateProcess { message: "Rejected(\"Failed to create unified exec process: CreateProcessWithLogonW failed: 1909\")" }

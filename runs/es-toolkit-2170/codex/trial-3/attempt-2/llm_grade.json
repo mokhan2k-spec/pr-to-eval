@@ -1,0 +1,15 @@
+{
+  "status": "graded",
+  "verdict": "PASS",
+  "correctness": 3,
+  "scope": 3,
+  "reasons": "The patch wraps the race in try/finally. It gives `timeout` an internal AbortController, and the `finally` block aborts that controller and calls `signal?.removeEventListener('abort', abortHandler)`. That covers resolve, reject, a synchronous throw from `run()` and the timeout case. The caller's listener is added with `{ once: true }` and removed on every path. An already-aborted signal is handled by aborting the internal controller up front, so no listener is added. The race against `timeout(ms, …)` is unchanged, so `TimeoutError` still comes from the timeout and `run()`'s result or rejection reason passes through untouched. Aborting the caller's signal propagates to the internal controller, which relies on `timeout` treating abort as lifting the limit. That `timeout` code is not in the diff, so I assumed it. The new tests check this with `vi.getTimerCount()` and a spy on `removeEventListener`. The signature is unchanged and only `withTimeout.ts` and its spec are touched.",
+  "model": "sonnet",
+  "model_ids": [
+    "claude-sonnet-5-5"
+  ],
+  "raw_text": "{\"verdict\": \"PASS\", \"correctness\": 3, \"scope\": 3, \"reasons\": \"The patch wraps the race in try/finally. It gives `timeout` an internal AbortController, and the `finally` block aborts that controller and calls `signal?.removeEventListener('abort', abortHandler)`. That covers resolve, reject, a synchronous throw from `run()` and the timeout case. The caller's listener is added with `{ once: true }` and removed on every path. An already-aborted signal is handled by aborting the internal controller up front, so no listener is added. The race against `timeout(ms, …)` is unchanged, so `TimeoutError` still comes from the timeout and `run()`'s result or rejection reason passes through untouched. Aborting the caller's signal propagates to the internal controller, which relies on `timeout` treating abort as lifting the limit. That `timeout` code is not in the diff, so I assumed it. The new tests check this with `vi.getTimerCount()` and a spy on `removeEventListener`. The signature is unchanged and only `withTimeout.ts` and its spec are touched.\"}",
+  "patch_sha256": "a86b7f8a85a58a7fd84f804a489deedef9a8670a0cf15fbf799f0bf12cb299e3",
+  "task_hash": "11c36ed2f4e6538d9199ff27e42b6f067c4765e4238c3e086813d5f7e2aa4c69",
+  "grader_prompt_sha256": "29e0697eaacc8d6a06cd66d7d063dd8683c23acd56a4dd046777536af34a1859"
+}
